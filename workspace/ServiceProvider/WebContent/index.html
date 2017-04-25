@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Insert title here</title>
+</head>
+<body>
+<form action="submitForm" method="get">
+Select SP:
+<select id='selProvider' name='selProvider'>
+  <option value='eGov' selected='selected'> eGov
+  <option value='SocNext'> SocNext
+</select>
+ <br/>
+Service of the SP: 
+<select id='selService' name='selService'>
+</select>
+<br/>
+Information Retrieved From the Card: ? <br/>
+<input type="submit" value="send information" name="send_button">
+</form>
+
+<h1>Window with logging information --> JSP page</h1>
+...
+
+
+<script>
+	(function() {
+	
+	  var serviceOptions = {
+	    "eGov": ["eGovService1", "eGovService2", "eGovService2"],
+	    "SocNext": ["SocNext1", "SocNext2"]
+	  };
+	
+	  var provider = document.getElementById('selProvider');
+	  var service = document.getElementById('selService');
+	
+	  //on change is a good event for this because you are guarenteed the value is different
+	  provider.onchange = function() {
+	    //clear out service
+	    service.length = 0;
+	    //get the selected value from provider
+	    var _val = this.options[this.selectedIndex].value;
+	    //loop through serviceOptions at the selected value
+	    for (var i in serviceOptions[_val]) {
+	      //create option tag
+	      var op = document.createElement('option');
+	      //set its value
+	      op.value = serviceOptions[_val][i];
+	      //set the display label
+	      op.text = serviceOptions[_val][i];
+	      //append it to Service
+	      service.appendChild(op);
+	    }
+	  };
+	  //fire this to update service on load
+	  provider.onchange();
+	
+	})();
+</script>
+
+
+</body>
+</html>
