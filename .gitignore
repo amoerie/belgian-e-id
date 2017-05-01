@@ -14,7 +14,6 @@ local.properties
 .settings/
 .loadpath
 .recommenders
-
 # Eclipse Core
 .project
 
@@ -105,3 +104,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/java,windows,eclipse
+
+./Servers
+./Servers2
