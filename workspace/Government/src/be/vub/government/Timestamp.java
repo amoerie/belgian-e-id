@@ -9,9 +9,9 @@ public class Timestamp {
     {
         System.out.println("Implement the signed Timestamp");
         
-        System.setProperty("javax.net.ssl.keyStore", "eid.store");
+        System.setProperty("javax.net.ssl.keyStore", "government.jks");
         System.setProperty("javax.net.ssl.keyStorePassword", "ab123456");
-        
+         
         ServerSocket serverSocket = null;
 		try {
 			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
