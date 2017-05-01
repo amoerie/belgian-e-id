@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.net.URL;
 
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.eclipse.swt.SWT;
@@ -29,7 +30,7 @@ public class Client {
 		try {
 			//socket connection to Government
 			//System.setProperty("javax.net.ssl.trustStore", "eid.store");
-			
+			HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
 			System.setProperty("javax.net.debug", "ssl");
 			System.setProperty("javax.net.ssl.keyStoreType", "jks");
 			System.setProperty("javax.net.ssl.keyStore", "middleware.jks");
@@ -39,20 +40,19 @@ public class Client {
 			System.setProperty("javax.net.ssl.trustStorePassword", "ab123456");
 			
 			SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
+			SSLSocket sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
 			
-			URL url = new URL("https://localhost:4444");
-			HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
-			connection.setSSLSocketFactory(socketFactory);
-
-			InputStream inputStream = connection.getInputStream();
+			InputStream inputStream = sslsocket.getInputStream();
+			OutputStream outputStream = sslsocket.getOutputStream();
+			
 			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
 			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 			
 			//OutputStream outputStream = connection.getOutputStream();
-			PrintWriter printWriter = new PrintWriter(connection.getOutputStream(), true);
+			PrintWriter printWriter = new PrintWriter(outputStream, true);
 			
 			System.out.print("Sending message to server: ");
-			printWriter.write("Hallo dit is de client");
+			printWriter.println("Hallo dit is de client");
 			
 			System.out.print("Message reply from server: ");
 			String string = null;

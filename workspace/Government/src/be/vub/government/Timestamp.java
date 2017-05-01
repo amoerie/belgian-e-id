@@ -2,6 +2,8 @@ package be.vub.government;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
+
 import javax.net.ssl.SSLServerSocketFactory;
 
 public class Timestamp {
@@ -22,7 +24,8 @@ public class Timestamp {
         
         while (true)
 			try {
-				new ServerThread(serverSocket.accept()).start();
+				Socket newSocket = serverSocket.accept();
+				new ServerThread(newSocket).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
