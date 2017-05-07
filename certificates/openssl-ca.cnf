@@ -69,6 +69,7 @@ organizationName    = optional
 organizationalUnitName  = optional
 commonName      = supplied
 emailAddress        = optional
+domain = optional
 
 ####################################################################
 [ signing_req ]
