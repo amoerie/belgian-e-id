@@ -23,21 +23,27 @@ openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out kinepoliscert.pem -infiles kinepoliscert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out planckendaelcert.pem -infiles planckendaelcert.csr
 
-PEMS concateneren:
-cat govcert.pem govkey.pem > gov.pem
-cat taxonwebcert.pem taxonwebkey.pem > taxonweb.pem
-cat studentportalcert.pem studentportalkey.pem > studentportal.pem
-cat facebookcert.pem facebookkey.pem > facebook.pem
-cat googlecert.pem googlekey.pem > google.pem
-cat colruytcert.pem colruytkey.pem > colruyt.pem
-cat delhaizecert.pem delhaizekey.pem > delhaize.pem
-cat kinepoliscert.pem kinepoliskey.pem > kinepolis.pem
-cat planckendaelcert.pem planckendaelkey.pem > planckendael.pem
+PEMs converteren naar p12:
+openssl pkcs12 -export -in govcert.pem -inkey govkey.pem -chain -CAfile cacert.pem -name "gov" -out gov.p12
+openssl pkcs12 -export -in colruytcert.pem -inkey colruytkey.pem -chain -CAfile cacert.pem -name "colruyt" -out colruyt.p12
+openssl pkcs12 -export -in delhaizecert.pem -inkey delhaizekey.pem -chain -CAfile cacert.pem -name "delhaize" -out delhaize.p12
+openssl pkcs12 -export -in taxonwebcert.pem -inkey taxonwebkey.pem -chain -CAfile cacert.pem -name "taxonweb" -out taxonweb.p12
+openssl pkcs12 -export -in studentportalcert.pem -inkey studentportalkey.pem -chain -CAfile cacert.pem -name "studentportal" -out studentportal.p12
+openssl pkcs12 -export -in facebookcert.pem -inkey facebookkey.pem -chain -CAfile cacert.pem -name "facebook" -out facebook.p12
+openssl pkcs12 -export -in googlecert.pem -inkey googlekey.pem -chain -CAfile cacert.pem -name "google" -out google.p12
+openssl pkcs12 -export -in kinepoliscert.pem -inkey kinepoliskey.pem -chain -CAfile cacert.pem -name "kinepolis" -out kinepolis.p12
+openssl pkcs12 -export -in planckendaelcert.pem -inkey planckendaelkey.pem -chain -CAfile cacert.pem -name "planckendael" -out planckendael.p12
 
-cat ca.pem gov.pem taxonweb.pem studentportal.pem facebook.pem google.pem colruyt.pem delhaize.pem kinepolis.pem planckendael.pem > all.pem
+nieuwe keystore maken:
+keytool -genkey -alias belgianeid -keyalg RSA -keystore belgianeid.jks -keysize 512
 
-CA toevoegen aan jks:
-keytool -import -trustcacerts -alias ca -file ca.pem -keystore belgianeidstore.jks
-
-PEMS toevoegen aan jks:
-keytool -import -trustcacerts -alias colruyt -file colruyt.pem -keystore belgianeidstore.jks
+p12s importeren naar JKS keystore:
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore colruyt.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore delhaize.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore gov.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore taxonweb.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore studentportal.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore facebook.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore google.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore kinepolis.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore planckendael.p12 -srcstoretype PKCS12
