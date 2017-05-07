@@ -1,7 +1,7 @@
-CA maken:
+SELF SIGNED CA maken:
 openssl req -x509 -config openssl-ca.cnf -newkey rsa:512 -sha256 -keyout cakey.pem -out cacert.pem -outform PEM
 
-MAKEN:
+KEYS + CERTIFICATE REQUESTS MAKEN:
 openssl req -config openssl-gov.cnf -newkey rsa:512 -sha256 -out govcert.csr -outform PEM
 openssl req -config openssl-taxonweb.cnf -newkey rsa:512 -sha256 -out taxonwebcert.csr -outform PEM
 openssl req -config openssl-studentportal.cnf -newkey rsa:512 -sha256 -out studentportalcert.csr -outform PEM
@@ -12,7 +12,7 @@ openssl req -config openssl-delhaize.cnf -newkey rsa:512 -sha256 -out delhaizece
 openssl req -config openssl-kinepolis.cnf -newkey rsa:512 -sha256 -out kinepoliscert.csr -outform PEM
 openssl req -config openssl-planckendael.cnf -newkey rsa:512 -sha256 -out planckendaelcert.csr -outform PEM
 
-TEKENEN:
+CERTIFICATE REQUESTS TEKENEN MET CA:
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out govcert.pem -infiles govcert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out taxonwebcert.pem -infiles taxonwebcert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out studentportalcert.pem -infiles studentportalcert.csr
