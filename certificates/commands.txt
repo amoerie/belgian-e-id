@@ -1,0 +1,14 @@
+MAKEN:
+openssl req -config openssl-colruyt.cnf -newkey rsa:2048 -sha512 -out colruytcert.csr -outform PEM
+openssl req -config openssl-delhaize.cnf -newkey rsa:2048 -sha512 -out delhaizecert.csr -outform PEM
+openssl req -config openssl-kinepolis.cnf -newkey rsa:2048 -sha512 -out kinepoliscert.csr -outform PEM
+openssl req -config openssl-planckendael.cnf -newkey rsa:2048 -sha512 -out planckendaelcert.csr -outform PEM
+
+TEKENEN:
+
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out colruytcert.pem -infiles colruytcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out delhaizecert.pem -infiles delhaizecert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out kinepoliscert.pem -infiles kinepoliscert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out planckendaelcert.pem -infiles planckendaelcert.csr
+
+
