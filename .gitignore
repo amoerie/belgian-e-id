@@ -109,3 +109,4 @@ $RECYCLE.BIN/
 ./workspace/Servers2
  workspace/Servers2/*
  workspace/ServiceProvider/build/*
+*.rnd
