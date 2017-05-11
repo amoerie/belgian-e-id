@@ -11,6 +11,7 @@ openssl req -config openssl-colruyt.cnf -newkey rsa:512 -sha256 -out colruytcert
 openssl req -config openssl-delhaize.cnf -newkey rsa:512 -sha256 -out delhaizecert.csr -outform PEM
 openssl req -config openssl-kinepolis.cnf -newkey rsa:512 -sha256 -out kinepoliscert.csr -outform PEM
 openssl req -config openssl-planckendael.cnf -newkey rsa:512 -sha256 -out planckendaelcert.csr -outform PEM
+openssl req -config openssl-common.cnf -newkey rsa:512 -sha256 -out commoncert.csr -outform PEM
 
 CERTIFICATE REQUESTS TEKENEN MET CA:
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out govcert.pem -infiles govcert.csr
@@ -22,6 +23,7 @@ openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out delhaizecert.pem -infiles delhaizecert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out kinepoliscert.pem -infiles kinepoliscert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out planckendaelcert.pem -infiles planckendaelcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out commoncert.pem -infiles commoncert.csr
 
 PEMs converteren naar p12:
 openssl pkcs12 -export -in govcert.pem -inkey govkey.pem -chain -CAfile cacert.pem -name "gov" -out gov.p12
@@ -33,6 +35,7 @@ openssl pkcs12 -export -in facebookcert.pem -inkey facebookkey.pem -chain -CAfil
 openssl pkcs12 -export -in googlecert.pem -inkey googlekey.pem -chain -CAfile cacert.pem -name "google" -out google.p12
 openssl pkcs12 -export -in kinepoliscert.pem -inkey kinepoliskey.pem -chain -CAfile cacert.pem -name "kinepolis" -out kinepolis.p12
 openssl pkcs12 -export -in planckendaelcert.pem -inkey planckendaelkey.pem -chain -CAfile cacert.pem -name "planckendael" -out planckendael.p12
+openssl pkcs12 -export -in commoncert.pem -inkey commonkey.pem -chain -CAfile cacert.pem -name "common" -out common.p12
 
 nieuwe keystore maken:
 keytool -genkey -alias belgianeid -keyalg RSA -keystore belgianeid.jks -keysize 512
@@ -47,3 +50,4 @@ keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srck
 keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore google.p12 -srcstoretype PKCS12
 keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore kinepolis.p12 -srcstoretype PKCS12
 keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore planckendael.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore common.p12 -srcstoretype PKCS12

@@ -7,3 +7,4 @@ V	200201143236Z		06	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=COLRUYT/domain
 V	200201143243Z		07	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=DELHAIZE/domain=SuperMarket
 V	200201143250Z		08	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=KINEPOLIS/domain=default
 V	200201143258Z		09	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=PLANCKENDAEL/domain=default
+V	200205194120Z		0A	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=COMMON/domain=common
