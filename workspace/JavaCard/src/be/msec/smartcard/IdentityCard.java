@@ -35,9 +35,15 @@ public class IdentityCard extends Applet {
 	private final static long VALIDATION_TIME = 24 * 60 * 60;
 	private final static byte TIMESTAMP_SIZE = (byte) 0x12;
 
-	private RSAPublicKey time_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC,
-			KeyBuilder.LENGTH_RSA_512, false);
+	
+	//certificates
+	private String gov_cert_hex;
+	private byte[] gov_cert_bytes;
+	private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 
+	
+	
+	
 	private byte[] serial = new byte[] { 0x30, 0x35, 0x37, 0x36, 0x39, 0x30, 0x31, 0x05 };
 	private OwnerPIN pin;
 
@@ -52,10 +58,18 @@ public class IdentityCard extends Applet {
 		pin.update(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (short) 0, PIN_SIZE);
 
 		// TODO: certificates and common private key
-
+		//??? to check
+		gov_cert_hex = "308201463081F10202101D300D06092A864886F70D0101050500302B3113301106035504030C0A476F7665726E6D656E7431143012060A0992268993F22C64040D0C04526F6F74301E170D3137303430393038323132395A170D3138303431393038323132395A30313113301106035504030C0A54696D65536572766572311A3018060A0992268993F22C64040D0C0A54696D65536572766572305C300D06092A864886F70D0101010500034B003048024100B9FA9461841DB13BF6AEE5F5D84AD3025D76EF094CF0FB99292A71FE64E9533878A932CE6A9411485C04B79F07255A890FEDB271AA8F34EB217801F1C6FEDA330203010001300D06092A864886F70D0101050500034100AB09931481C691FDBC04116D011DACF013D85ED7B5801991ADF0B4D1130A785A79698421C1E9FF1B421EBC274ADC78A89A62962D960BA7E914FE905FC03D53FE";
+		gov_cert_bytes = hexStringToByteArray(gov_cert_hex);
+		
+		
 		// TODO: byte arrays with modulus and exponents
+		
 
 		// TODO: make keys
+		//gov_pk.setExponent(gov_exp_pub_bytes, (short)0, (short)gov_exp_pub_bytes.length);
+		//gov_pk.setModulus(gov_modulus_bytes, (short)0, (short)gov_modulus_bytes.length);
+		
 
 		/*
 		 * This method registers the applet with the JCRE on the card.
@@ -121,7 +135,6 @@ public class IdentityCard extends Applet {
 
 		// If no matching instructions are found it is indicated in the status
 		// word of the response.
-		// This can be done by using this method. As an argument a short is
 		// given that indicates
 		// the type of warning. There are several predefined warnings in the
 		// 'ISO7816' class.
@@ -209,6 +222,8 @@ public class IdentityCard extends Applet {
 
 		byte[] buffer = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
+		
+		//step 1 (3)
 		if (checkTimestamp(buffer, (int) ISO7816.OFFSET_CDATA, (int) buffer[ISO7816.OFFSET_LC]) == false)
 			ISOException.throwIt(SW_REQ_REVALIDATION);
 	}
@@ -253,16 +268,15 @@ public class IdentityCard extends Applet {
 		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + new_time.length + 2 + 1), new_timesig, (short) 0,
 				(short) new_timesig.length);
 
-		// (10) Verify signature with PK of Timeserver
+		// (10) Verify signature with PK of Government
 		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-		sig.init(time_pk, Signature.MODE_VERIFY);
+		//TODO: ---- sig.init(time_pk, Signature.MODE_VERIFY);
 		Boolean verify = sig.verify(new_time, (short) 0, (short) new_time.length, new_timesig, (short) 0,
 				(short) new_timesig.length);
 
 		if (verify != false) {
 			System.out.println("Time signature verified");
-			// (11) Abort if current time on card is later than the time from
-			// the Timeserver
+			// (11) Abort if current time on card is later than the time from the Government Timeserver
 			if (byteArrayToLong(lastValidationTime) < byteArrayToLong(new_timestamp)) {
 
 				// (12) Update the time.

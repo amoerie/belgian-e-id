@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
@@ -30,8 +31,8 @@ public class ServerThread extends Thread {
 	//MESSAGES from M -> G
 	private final static String MSG_GET_TIME = "RevalidationRequest";
 		
-	//certificate
-	private static String store_location = "belgianeid.jks";
+	//certificate                               
+	private static String store_location = "src/belgianeid.jks";
 	private static char[] mypass = "123456".toCharArray();
 	private static RSAPrivateCrtKey my_key;
 	private static X509Certificate my_cert;
@@ -57,12 +58,10 @@ public class ServerThread extends Thread {
 		}
 		
 		try {
-			OutputStream outputStream = socket.getOutputStream();
-			InputStream inputStream = socket.getInputStream();
-			
-			BufferedReader inputReader =  new BufferedReader(new InputStreamReader(inputStream));
-			PrintWriter outputWriter = new PrintWriter(outputStream, true);
-			
+			PrintWriter outputWriter = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader inputReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            
+            
 			String message = null;
 			while ((message = inputReader.readLine()) != null) {
 				if (message.equals(MSG_GET_TIME)) {
@@ -125,7 +124,7 @@ public class ServerThread extends Thread {
 		System.arraycopy(timestamp_bytes, (short)0, time_bytes, (short)0, (short)timestamp_bytes.length);
 		System.arraycopy(timestring_bytes, (short)0, time_bytes, (short)timestamp_bytes.length, (short)timestring_bytes.length);
 		
-		Signature signature = Signature.getInstance("SHA2withRSA");
+		Signature signature = Signature.getInstance("SHA256withRSA");
 		signature.initSign(my_key);
 		signature.update(time_bytes);
 		byte[] timesig_bytes = signature.sign();

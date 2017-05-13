@@ -15,8 +15,9 @@ public class Timestamp {
         //System.setProperty("javax.net.ssl.keyStorePassword", "123456");
          
         ServerSocket serverSocket = null;
-		try {
-			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
+        try {
+//			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
+			serverSocket = new ServerSocket(4444);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -24,8 +25,8 @@ public class Timestamp {
         
         while (true)
 			try {
-				Socket newSocket = serverSocket.accept();
-				new ServerThread(newSocket).start();
+				Socket clientSocket = serverSocket.accept();
+				new ServerThread(clientSocket).start();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
