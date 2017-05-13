@@ -36,12 +36,50 @@ public class IdentityCard extends Applet {
 	private final static byte TIMESTAMP_SIZE = (byte) 0x12;
 
 	
-	//certificates
+	//certificates - start \\\\
+	private String common_key_hex;
+	private String common_cert_hex;
 	private String gov_cert_hex;
-	private byte[] gov_cert_bytes;
-	private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
-
 	
+	private byte[] common_key_bytes;
+	private byte[] common_cert_bytes;
+	private byte[] common_modulus_bytes;
+	private byte[] common_exp_priv_bytes;
+	private byte[] common_exp_pub_bytes;
+	private byte[] common_sig_bytes;
+	private byte[] gov_cert_bytes;
+	private byte[] gov_modulus_bytes;
+	private byte[] gov_exp_pub_bytes;
+	
+	private RSAPrivateKey common_sk = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
+	private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+	private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+	private RSAPublicKey time_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+	
+	private final static int LENGTH_RSA_512_BYTES = KeyBuilder.LENGTH_RSA_512/8;
+	//private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128/8;
+	
+	private int temp_int;
+	
+	//certificates - end \\\\
+	
+	//keywords - start \\\\
+	private final static String MODULUS_HEX = "024100";
+	private final static byte[] MODULUS_BYTES = hexStringToByteArray(MODULUS_HEX);
+	private final static String EXPONENT_HEX = "010240";
+	private final static byte[] EXPONENT_BYTES = hexStringToByteArray(EXPONENT_HEX);
+	private final static String SIGNATURE_HEX = "300D06092A864886F70D0101050500034100";
+	private final static byte[] SIGNATURE_BYTES = hexStringToByteArray(SIGNATURE_HEX);
+	private final static String CERT_HEX = "308201"; // +1byte
+	private final static byte[] CERT_BYTES = hexStringToByteArray(CERT_HEX);
+	private final static String DOMAIN_HEX = "060A0992268993F22C64040D0C";
+	private final static byte[] DOMAIN_BYTES = hexStringToByteArray(DOMAIN_HEX);
+	private final static String CN_HEX = "06035504030C";
+	private final static byte[] CN_BYTES = hexStringToByteArray(CN_HEX);
+	private final static String VALIDITY_HEX = "170D";
+	private final static byte[] VALIDITY_BYTES = hexStringToByteArray(VALIDITY_HEX);
+		
+	//keywords - end \\\\
 	
 	
 	private byte[] serial = new byte[] { 0x30, 0x35, 0x37, 0x36, 0x39, 0x30, 0x31, 0x05 };
@@ -58,17 +96,37 @@ public class IdentityCard extends Applet {
 		pin.update(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (short) 0, PIN_SIZE);
 
 		// TODO: certificates and common private key
-		//??? to check
-		gov_cert_hex = "308201463081F10202101D300D06092A864886F70D0101050500302B3113301106035504030C0A476F7665726E6D656E7431143012060A0992268993F22C64040D0C04526F6F74301E170D3137303430393038323132395A170D3138303431393038323132395A30313113301106035504030C0A54696D65536572766572311A3018060A0992268993F22C64040D0C0A54696D65536572766572305C300D06092A864886F70D0101010500034B003048024100B9FA9461841DB13BF6AEE5F5D84AD3025D76EF094CF0FB99292A71FE64E9533878A932CE6A9411485C04B79F07255A890FEDB271AA8F34EB217801F1C6FEDA330203010001300D06092A864886F70D0101050500034100AB09931481C691FDBC04116D011DACF013D85ED7B5801991ADF0B4D1130A785A79698421C1E9FF1B421EBC274ADC78A89A62962D960BA7E914FE905FC03D53FE";
+		//https://holtstrom.com/michael/tools/hextopem.php
+		//common_key_hex = "TODO";
+		//common_cert_hex = "30820243308201EDA003020102020900E34DA0275BBFFBD6300D06092A864886F70D01010B05003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303530373134323333355A170D3137303630363134323333355A3075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265305C300D06092A864886F70D0101010500034B003048024100CE832F1E76C683B0DD150F189660FF4D5A63478CC35BA6BB78BD2A061829BDD852889CFE04F44674933B146A5EB45276219FAB763BC589F696F6F0306C6D49950203010001A360305E301D0603551D0E04160414FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B301F0603551D23041830168014FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B300F0603551D130101FF040530030101FF300B0603551D0F040403020106300D06092A864886F70D01010B0500034100405D4CB97716896FFF73490439688CC24664DEF2977C316491D089C288530929C9A660FA0AD1A4ED8652419796143F4CF56D99AAF06C3FCC95999CE8693BEF8F";
+		gov_cert_hex = "30820243308201EDA003020102020900E34DA0275BBFFBD6300D06092A864886F70D01010B05003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303530373134323333355A170D3137303630363134323333355A3075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265305C300D06092A864886F70D0101010500034B003048024100CE832F1E76C683B0DD150F189660FF4D5A63478CC35BA6BB78BD2A061829BDD852889CFE04F44674933B146A5EB45276219FAB763BC589F696F6F0306C6D49950203010001A360305E301D0603551D0E04160414FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B301F0603551D23041830168014FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B300F0603551D130101FF040530030101FF300B0603551D0F040403020106300D06092A864886F70D01010B0500034100405D4CB97716896FFF73490439688CC24664DEF2977C316491D089C288530929C9A660FA0AD1A4ED8652419796143F4CF56D99AAF06C3FCC95999CE8693BEF8F";
+		//common_key_bytes = hexStringToByteArray(common_key_hex);
+		//common_cert_bytes = hexStringToByteArray(common_cert_hex);
 		gov_cert_bytes = hexStringToByteArray(gov_cert_hex);
 		
-		
 		// TODO: byte arrays with modulus and exponents
-		
+//		temp_int = arraySubstrIndex(common_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
+//		common_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
+//		Util.arrayCopy(common_cert_bytes, (short)temp_int, common_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
+//
+//		temp_int = arraySubstrIndex(common_key_bytes, EXPONENT_BYTES) + EXPONENT_BYTES.length;
+//		common_exp_priv_bytes = new byte[LENGTH_RSA_512_BYTES];
+//		Util.arrayCopy(common_key_bytes, (short)temp_int, common_exp_priv_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
+//		common_exp_pub_bytes = hexStringToByteArray("010001");
+//
+		temp_int = arraySubstrIndex(gov_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
+		gov_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
+		Util.arrayCopy(gov_cert_bytes, (short)temp_int, gov_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
+		gov_exp_pub_bytes = hexStringToByteArray("010001");
+
 
 		// TODO: make keys
-		//gov_pk.setExponent(gov_exp_pub_bytes, (short)0, (short)gov_exp_pub_bytes.length);
-		//gov_pk.setModulus(gov_modulus_bytes, (short)0, (short)gov_modulus_bytes.length);
+//		common_sk.setExponent(common_exp_priv_bytes, (short)0, (short)common_exp_priv_bytes.length);
+//		common_sk.setModulus(common_modulus_bytes, (short)0, (short)common_modulus_bytes.length);
+//		common_pk.setExponent(common_exp_pub_bytes, (short)0, (short)common_exp_pub_bytes.length);
+//		common_pk.setModulus(common_modulus_bytes, (short)0, (short)common_modulus_bytes.length);
+		gov_pk.setExponent(gov_exp_pub_bytes, (short)0, (short)gov_exp_pub_bytes.length);
+		gov_pk.setModulus(gov_modulus_bytes, (short)0, (short)gov_modulus_bytes.length);
 		
 
 		/*
