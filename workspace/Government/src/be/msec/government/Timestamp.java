@@ -1,4 +1,4 @@
-package be.vub.government;
+package be.msec.government;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -11,8 +11,8 @@ public class Timestamp {
     {
         System.out.println("Implement the signed Timestamp");
         
-        System.setProperty("javax.net.ssl.keyStore", "government.jks");
-        System.setProperty("javax.net.ssl.keyStorePassword", "ab123456");
+        //System.setProperty("javax.net.ssl.keyStore", "belgianeid.jks");
+        //System.setProperty("javax.net.ssl.keyStorePassword", "123456");
          
         ServerSocket serverSocket = null;
 		try {

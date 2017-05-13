@@ -1,4 +1,4 @@
-package be.vub.service;
+package be.msec.service;
 
 import java.io.IOException;
 

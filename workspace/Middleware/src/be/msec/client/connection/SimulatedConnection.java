@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package be.vub.client.connection;
+package be.msec.client.connection;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

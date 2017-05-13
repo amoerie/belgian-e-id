@@ -1,14 +1,9 @@
-package be.vub.client;
+package be.msec.client;
 
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-
-import be.vub.client.connection.Connection;
-import be.vub.client.connection.IConnection;
-import be.vub.client.connection.SimulatedConnection;
-import javax.smartcardio.*;
-
-import org.eclipse.swt.widgets.Label;
+//import be.msec.client.connection.Connection;
+import be.msec.client.connection.IConnection;
+import be.msec.client.connection.SimulatedConnection;
+//import javax.smartcardio.*;
 
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
@@ -19,10 +14,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.URL;
+//import java.net.Socket;
+//import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.Date;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocket;
@@ -33,15 +29,22 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JTextArea;
 
-import org.eclipse.swt.SWT;
-
 public class Client {
 
-	protected Shell shell;
-	
 	
 	//global variables
+	private final static byte IDENTITY_CARD_CLA =(byte)0x80;
 	
+	//from M -> SC
+	private static final byte HELLO_DIS = 0x40;
+	private static final byte NEW_TIME = 0x41;
+	
+	//from SC -> M
+	private final static short SW_ABORT = 0x6339;
+	private final static short SW_REQ_REVALIDATION = 0x6340;
+	
+	//MESSAGES from M -> G
+	private final static String MSG_GET_TIME = "RevalidationRequest";
 	
 	//connection to card
 	IConnection con;
@@ -98,7 +101,6 @@ public class Client {
 		//Real Card:
 		//con = new Connection();
 		//((Connection)c).setTerminal(0); //depending on which cardreader you use
-		
 		con.connect(); 
 		
 		try {
@@ -107,8 +109,13 @@ public class Client {
 			 * For more info on the use of CommandAPDU and ResponseAPDU:
 			 * See http://java.sun.com/javase/6/docs/jre/api/security/smartcardio/spec/index.html
 			 */
-			CreateSelectApplet();
+			createSelectApplet();
 			
+			//step 1: updateTime()
+			updateTime();
+			//step 2: authenticateServiceProvider()
+			//step 3: authenticateCard()
+			//step 4: releaseAttributes()
 			
 			
 		} catch (Exception e) {
@@ -119,7 +126,7 @@ public class Client {
 		}
 	}
 	
-	private void CreateSelectApplet() throws Exception {
+	private void createSelectApplet() throws Exception {
 		try {
 			//0. create applet (only for simulator!!!)
 			a = new CommandAPDU(0x00, 0xa4, 0x04, 0x00,new byte[]{(byte) 0xa0, 0x00, 0x00, 0x00, 0x62, 0x03, 0x01, 0x08, 0x01}, 0x7f);
@@ -143,6 +150,35 @@ public class Client {
 		}
 	}
 	
+	private void updateTime() throws Exception {
+		communication.append("Connecting to card\n");
+		
+		//(1) Hello", send currentTime to card
+		Date date = new Date();
+		Long timestamp = date.getTime()/1000;
+		a = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00,longToBytes(timestamp));
+		res = con.transmit(a);
+		System.out.println(res);
+		//receive reqRevalidation
+		if (res.getSW()== SW_REQ_REVALIDATION){
+			communication.append("RevalidationRequest: new timestamp required from Government server\n");
+			
+			//TODO: implement new time
+			byte[] new_time = getNewTimeFromGov();
+			
+			//(9) update time on card
+			a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_TIME, 0x00, 0x00,new_time);
+			res = con.transmit(a);
+			System.out.println(res);
+			if (res.getSW()==SW_ABORT)throw new Exception("Aborted: Cannot update time");
+			else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+			
+			communication.append("RevalidationRequest: new timestamp is saved on the card\n");
+			
+		} //else goto step 2 : authenticateServiceProvider
+		communication.append("RevalidationRequest: false");
+	}
+	
 	private byte[] getNewTimeFromGov()
 	{
 		//socket connection to Government
@@ -150,11 +186,11 @@ public class Client {
 		HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
 		System.setProperty("javax.net.debug", "ssl");
 		System.setProperty("javax.net.ssl.keyStoreType", "jks");
-		System.setProperty("javax.net.ssl.keyStore", "middleware.jks");
-		System.setProperty("javax.net.ssl.keyStorePassword", "ab123456");
+		System.setProperty("javax.net.ssl.keyStore", "belgianeid.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
 		System.setProperty("javax.net.ssl.trustStoreType", "jks");
-		System.setProperty("javax.net.ssl.trustStore", "middleware.jks");
-		System.setProperty("javax.net.ssl.trustStorePassword", "ab123456");
+		System.setProperty("javax.net.ssl.trustStore", "belgianeid.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 		
 		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
 		SSLSocket sslsocket;
@@ -170,14 +206,28 @@ public class Client {
 			//OutputStream outputStream = connection.getOutputStream();
 			PrintWriter printWriter = new PrintWriter(outputStream, true);
 			
-			System.out.print("Sending message to server: ");
-			printWriter.println("Hallo dit is de client");
+			//System.out.print("Sending message to server: ");
+			printWriter.println(MSG_GET_TIME);
 			
 			System.out.print("Message reply from server: ");
-			String string = null;
-			while ((string = bufferedReader.readLine()) != null) {
-			    System.out.println("Received: " + string);
-			}
+			//String msgFromGServer = null;
+			//while ((msgFromGServer = bufferedReader.readLine()) != null) {
+			//    System.out.println("Received: " + msgFromGServer);
+			//    //return hexStringToByteArray(msgFromGServer);
+			//}
+			String msgFromGServer = bufferedReader.readLine();
+			if (msgFromGServer.equalsIgnoreCase("Abort")){
+            	communication.append("Error in timeserver\n");
+            	try {
+					throw new Exception("Error in timeserver");
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            }else{
+            	System.out.println("Received: " + msgFromGServer);
+            	// TODO: !!! return hexStringToByteArray(msgFromGServer);
+            }
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
