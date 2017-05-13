@@ -168,42 +168,45 @@ public class Client {
 			
 			byte[] new_time = getNewTimeFromGov();
 			
-			//step 1 (9) update time on card
-			a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_TIME, 0x00, 0x00,new_time);
-			res = con.transmit(a);
-			System.out.println(res);
-			if (res.getSW()==SW_ABORT)throw new Exception("Aborted: Cannot update time");
-			else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+			if (new_time != null) {
+				//step 1 (9) update time on card
+				a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_TIME, 0x00, 0x00,new_time);
+				res = con.transmit(a);
+				System.out.println(res);
+				if (res.getSW()==SW_ABORT)throw new Exception("Aborted: Cannot update time");
+				else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+//				
+				communication.append("RevalidationRequest: new timestamp is saved on the card\n");	
+			}
 			
-			communication.append("RevalidationRequest: new timestamp is saved on the card\n");
-			
-		} //else goto step 2 : authenticateServiceProvider
-		communication.append("RevalidationRequest: false");
+		} else { //goto step 2 : authenticateServiceProvider
+			communication.append("RevalidationRequest: false");
+		}
 	}
 	
 	//step 1 (7)
 	private byte[] getNewTimeFromGov()
 	{
 		//socket connection to Government
-//		HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
-//		System.setProperty("javax.net.debug", "ssl");
-//		System.setProperty("javax.net.ssl.keyStoreType", "jks");
-//		System.setProperty("javax.net.ssl.keyStore", "belgianeid.jks");
-//		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
-//		System.setProperty("javax.net.ssl.trustStoreType", "jks");
-//		System.setProperty("javax.net.ssl.trustStore", "belgianeid.jks");
-//		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+		HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
+		System.setProperty("javax.net.debug", "ssl");
+		System.setProperty("javax.net.ssl.keyStoreType", "jks");
+		System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		System.setProperty("javax.net.ssl.trustStoreType", "jks");
+		System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 		
-//		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
-//		SSLSocket sslsocket;
+		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
+		SSLSocket sslsocket;
 		try {
-//			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
-//			InputStream inputStream = sslsocket.getInputStream();
-//			OutputStream outputStream = sslsocket.getOutputStream();
+			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
+			InputStream inputStream = sslsocket.getInputStream();
+			OutputStream outputStream = sslsocket.getOutputStream();
 			
-			Socket govSocket = new Socket("127.0.0.1", 4444);
-			InputStream inputStream = govSocket.getInputStream();
-			OutputStream outputStream = govSocket.getOutputStream();
+//			Socket govSocket = new Socket("127.0.0.1", 4444);
+//			InputStream inputStream = govSocket.getInputStream();
+//			OutputStream outputStream = govSocket.getOutputStream();
 			
 			
 			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -232,7 +235,7 @@ public class Client {
 				}
             }else{
             	System.out.println("Received: " + msgFromGServer);
-            	// TODO: !!! return hexStringToByteArray(msgFromGServer);
+            	return hexStringToByteArray(msgFromGServer);
             }
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block

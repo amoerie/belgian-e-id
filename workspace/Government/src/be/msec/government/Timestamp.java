@@ -11,13 +11,18 @@ public class Timestamp {
     {
         System.out.println("Implement the signed Timestamp");
         
-        //System.setProperty("javax.net.ssl.keyStore", "belgianeid.jks");
-        //System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+        System.setProperty("javax.net.debug", "ssl");
+		System.setProperty("javax.net.ssl.keyStoreType", "jks");
+		System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		System.setProperty("javax.net.ssl.trustStoreType", "jks");
+		System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
          
         ServerSocket serverSocket = null;
         try {
-//			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
-			serverSocket = new ServerSocket(4444);
+			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
+//			serverSocket = new ServerSocket(4444);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
