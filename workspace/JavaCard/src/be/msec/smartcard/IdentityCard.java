@@ -327,12 +327,22 @@ public class IdentityCard extends Applet {
 				(short) new_timesig.length);
 
 		// (10) Verify signature with PK of Government
-		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-		//TODO: ---- sig.init(time_pk, Signature.MODE_VERIFY);
-		Boolean verify = sig.verify(new_time, (short) 0, (short) new_time.length, new_timesig, (short) 0,
-				(short) new_timesig.length);
-
-		if (verify != false) {
+		System.out.println("Verify signature with PK of Government");
+		//why not ALG_RSA_SHAT_256_PKCS1
+		//https://docs.oracle.com/javacard/3.0.5/api/javacard/security/Signature.html
+		//https://www.win.tue.nl/pinpasjc/docs/apis/jc222/javacard/security/Signature.html
+		//Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_256_PKCS1, false); --> not yet in 2.2.2
+		//Signature sig = Signature.getInstance(Signature.ALG_HMAC_SHA_256, false);
+		//sha1
+		
+		//TODO: signing now in comment!
+//		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+//		sig.init(time_pk, Signature.MODE_VERIFY);
+//		System.out.println("verify test");
+//		Boolean verify = sig.verify(new_time, (short) 0, (short) new_time.length, new_timesig, (short) 0,
+//				(short) new_timesig.length);
+//
+//		if (verify != false) {
 			System.out.println("Time signature verified");
 			// (11) Abort if current time on card is later than the time from the Government Timeserver
 			if (byteArrayToLong(lastValidationTime) < byteArrayToLong(new_timestamp)) {
@@ -344,8 +354,8 @@ public class IdentityCard extends Applet {
 				Util.arrayCopy(new_timestring, (short) 0, lastValidationTimeString, (short) 0,
 						(short) new_timestring.length);
 
-			} else
-				ISOException.throwIt(SW_ABORT);
+//			} else
+//				ISOException.throwIt(SW_ABORT);
 		} else
 			ISOException.throwIt(SW_ABORT);
 	}

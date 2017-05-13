@@ -179,6 +179,14 @@ public class Client {
 				communication.append("RevalidationRequest: new timestamp is saved on the card\n");	
 			}
 			
+			//only for testing the code: extra send hello to the card with the same timestamp 
+			a = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00,longToBytes(timestamp));
+			res = con.transmit(a);
+			if (res.getSW()!=SW_REQ_REVALIDATION) {
+				communication.append("NEW RevalidationRequest is false now\n");
+			}
+			else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+			
 		} else { //goto step 2 : authenticateServiceProvider
 			communication.append("RevalidationRequest: false");
 		}
