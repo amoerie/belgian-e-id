@@ -27,6 +27,7 @@ public class IdentityCard extends Applet {
 	private static final byte NEW_SERVICE_CERT = 0x42;
 	private static final byte SERVICE_CERT_DONE = 0x43;
 	private static final byte SERVICE_AUTH = 0x44;
+	private static final byte SERVICE_RESP_CHALLENGE = 0x45;
 		
 		
 	//from SC -> M
@@ -130,7 +131,9 @@ public class IdentityCard extends Applet {
 	private final static byte[] VALIDITY_BYTES = hexStringToByteArray(VALIDITY_HEX);
 		
 	//keywords - end \\\\
-	
+
+	private Boolean isServiceAuthenticated = false;
+	private Boolean isPinValidated = false;
 	
 	private byte[] serial = new byte[] { 0x30, 0x35, 0x37, 0x36, 0x39, 0x30, 0x31, 0x05 };
 	private OwnerPIN pin;
@@ -250,6 +253,9 @@ public class IdentityCard extends Applet {
 			break;
 		case SERVICE_AUTH:
 			authenticateService(apdu);
+			break;
+		case SERVICE_RESP_CHALLENGE:
+			verifyServiceRespChallenge(apdu);
 			break;
 
 		// If no matching instructions are found it is indicated in the status
@@ -578,6 +584,64 @@ public class IdentityCard extends Applet {
 		srng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
 		srng.generateData(last_challenge, (short)0, (short)2);
 	}
+	// Step 2 (13)
+	private void verifyServiceRespChallenge(APDU apdu) {
+		byte[] buffer = apdu.getBuffer();
+		apdu.setIncomingAndReceive();
+		System.out.println("using key to decrypt: " + byteArrayToHexString(last_symm_key_bytes));
+		
+		byte[] message_chunk = new byte[buffer[ISO7816.OFFSET_LC]];
+		Util.arrayCopy(buffer, (short)ISO7816.OFFSET_CDATA, message_chunk, (short)0, (short)message_chunk.length);
+		System.out.println("incoming buffer: " + byteArrayToHexString(message_chunk));
+		System.out.println("incoming buffer length: " + message_chunk.length);
+		
+		last_challenge_response_aes = new byte[LENGTH_AES_128_BYTES];
+		cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
+		cipher.init(last_symm_key, Cipher.MODE_DECRYPT);
+		cipher.doFinal(message_chunk, (short)0, (short)message_chunk.length, last_challenge_response_aes, (short)0);
+		last_challenge_response = new byte[last_challenge_response_aes[0]];
+		System.out.println(byteArrayToHexString(last_challenge_response_aes));
+		System.out.println(last_challenge_response.length);
+		Util.arrayCopy(last_challenge_response_aes, (short)1, last_challenge_response, (short)0, (short)last_challenge_response.length);
+		
+		chall_long = Long.parseLong(byteArrayToHexString(last_challenge), 16);
+		chall_resp_long = Long.parseLong(byteArrayToHexString(last_challenge_response), 16);
+	
+		if ((chall_resp_long-chall_long) == 1){
+			isServiceAuthenticated = true;
+			System.out.println("Server authenticated!");
+			//challenge answer OK, SP is now authenticated
+			//respond to challenge from server
+			last_server_challenge = new byte[last_challenge_response_aes[1 + last_challenge_response.length]];
+			Util.arrayCopy(last_challenge_response_aes, (short)(1 + last_challenge_response.length + 1), last_server_challenge, (short)0, (short)last_server_challenge.length);
+			
+			//sign challenge with common SK
+			temp_int = 1 + LENGTH_RSA_512_BYTES + 1 + common_cert_bytes.length;
+			temp_int += LENGTH_AES_128_BYTES - (temp_int%16);
+			last_server_challenge_resp = new byte[temp_int];
+			last_server_challenge_resp[0] = (byte) LENGTH_RSA_512_BYTES;
+			sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+			sig.init(common_sk, Signature.MODE_SIGN);
+			sig.sign(last_server_challenge, (short)0, (short)last_server_challenge.length, last_server_challenge_resp, (short)1);
+			//add the common certificate
+			System.out.println("cert length " + common_cert_bytes.length);
+			last_server_challenge_resp[1 + LENGTH_RSA_512_BYTES] = (byte)(last_server_challenge_resp.length - 1 - LENGTH_RSA_512_BYTES - 1 - common_cert_bytes.length); //we will not send the cert length, but the number of remaining bytes in the array
+			Util.arrayCopy(common_cert_bytes, (short)0, last_server_challenge_resp, (short)(1 + LENGTH_RSA_512_BYTES + 1), (short)common_cert_bytes.length);
+			//encrypt with symmetric key
+			cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
+			cipher.init(last_symm_key, Cipher.MODE_ENCRYPT);
+			last_server_challenge_resp_encrypted = new byte[temp_int];
+			cipher.doFinal(last_server_challenge_resp, (short)0, (short)last_server_challenge_resp.length, last_server_challenge_resp_encrypted, (short)0);
+			
+			System.out.println("response to server: " + byteArrayToHexString(last_server_challenge_resp));
+			//now wait for middleware to get the string as it is too long to send back in one response
+				
+		} else {
+			ISOException.throwIt(SW_ABORT);
+		}
+
+	}
+	
 	
 
 	// STEP 3 ----
