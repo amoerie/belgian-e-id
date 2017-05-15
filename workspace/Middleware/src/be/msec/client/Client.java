@@ -15,8 +15,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
-//import java.net.Socket;
-//import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Date;
@@ -115,6 +113,7 @@ public class Client {
 			//step 1: updateTime()
 			updateTime();
 			//step 2: authenticateServiceProvider()
+			authenticateServiceProvider();
 			//step 3: authenticateCard()
 			//step 4: releaseAttributes()
 			
@@ -256,6 +255,20 @@ public class Client {
 		return null;
 	}
 
+	//step 2
+	private void authenticateServiceProvider() throws IOException {
+		//connect to the SP
+		Socket providerSocket = new Socket("127.0.0.1", 8888);
+		
+		InputStream inputStream = providerSocket.getInputStream();
+		OutputStream outputStream = providerSocket.getOutputStream();
+		
+		
+		
+		//close the socket
+		providerSocket.close();
+		
+	}
 	
 	
 	
