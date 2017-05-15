@@ -95,9 +95,9 @@ public class ServerThread extends Thread {
 		KeyStore store;
 		try {
 			store = KeyStore.getInstance("JKS");
-			FileInputStream fis = new FileInputStream(store_location);
-			store.load(fis, mypass);
-			fis.close();
+			FileInputStream stream = new FileInputStream(store_location);
+			store.load(stream, mypass);
+			stream.close();
 			my_key = (RSAPrivateCrtKey) store.getKey("gov", mypass);
 			my_cert = (X509Certificate) store.getCertificate("gov");
 			my_cert_bytes = my_cert.getEncoded();
