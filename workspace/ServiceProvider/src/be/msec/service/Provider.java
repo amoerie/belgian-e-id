@@ -7,12 +7,17 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
 import javax.swing.SwingConstants;
@@ -28,8 +33,8 @@ public class Provider extends JFrame {
 	private JComboBox cbService;
 	private JButton btnInitButton;
 	
-	private JTextArea output;
-	private JTextArea logging;
+	public static JTextArea output;
+	public static JTextArea logging;
 	
 
 	/**
@@ -59,6 +64,7 @@ public class Provider extends JFrame {
 	private void createEvents() {
 		btnInitButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
+				initServiceProvider();
 			}
 		});
 		
@@ -86,6 +92,40 @@ public class Provider extends JFrame {
 	        }
 	    });
 		
+	}
+
+	protected void initServiceProvider() {
+		
+		String domain = (String)cbDomain.getSelectedItem();
+		String service = (String)cbService.getSelectedItem();
+		
+		logging.setText(logging.getText() + "\nStarting the Service Provider " + service + ""
+				+ " of Domain " + domain);
+		
+//      System.setProperty("javax.net.debug", "ssl");
+//		System.setProperty("javax.net.ssl.keyStoreType", "jks");
+//		System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
+//		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+//		System.setProperty("javax.net.ssl.trustStoreType", "jks");
+//		System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
+//		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+         
+        ServerSocket serverSocket = null;
+        try {
+			//serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
+			serverSocket = new ServerSocket(8888);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+        
+//        while (true)
+//			try {
+//				Socket clientSocket = serverSocket.accept();
+//				new ProviderThread(clientSocket).start();
+        		new ProviderThread(serverSocket).start();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
 	}
 
 	private void initComponents() {
