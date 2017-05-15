@@ -21,14 +21,28 @@ public class IdentityCard extends Applet {
 	private final static short SW_VERIFICATION_FAILED = 0x6300;
 	private final static short SW_PIN_VERIFICATION_REQUIRED = 0x6301;
 
-	// from M -> SC
+	//from M -> SC
 	private static final byte HELLO_DIS = 0x40;
 	private static final byte NEW_TIME = 0x41;
-
-	// from SC -> M
+	private static final byte NEW_SERVICE_CERT = 0x42;
+	private static final byte SERVICE_CERT_DONE = 0x43;
+	private static final byte SERVICE_AUTH = 0x44;
+		
+		
+	//from SC -> M
 	private final static short SW_ABORT = 0x6339;
 	private final static short SW_REQ_REVALIDATION = 0x6340;
+	private final static short SW_SIG_NO_MATCH = 0x6341;
+	private final static short SW_CERT_EXPIRED = 0x6342;
 
+	//last variables
+	static byte[] last_message = new byte[0];
+	static byte[] last_signature = new byte[0];
+	static byte[] last_cert = new byte[0];
+	static RSAPublicKey last_pk;
+	static byte[] last_modulus;
+	static byte[] last_exp = hexStringToByteArray("010001");
+	
 	// timestamps
 	byte[] lastValidationTime = new byte[] { 0x00 }; // (20)000101000000
 	byte[] lastValidationTimeString = hexStringToByteArray("303030313031303030303030"); // (20)000101000000
@@ -51,13 +65,49 @@ public class IdentityCard extends Applet {
 	private byte[] gov_modulus_bytes;
 	private byte[] gov_exp_pub_bytes;
 	
+	//storage to process certificate
+	static byte[] last_cert_issuer_cn;
+	static byte[] last_cert_issuer_domain;
+	static byte[] last_cert_subject_cn;
+	static byte[] last_cert_subject_domain;
+	static byte[] last_cert_valid_after;
+	static byte[] last_cert_valid_before;
+	static byte[] last_cert_modulus;
+	static byte[] last_cert_exponent;
+	static byte[] last_cert_signature;
+	static byte[] last_cert_tbs;
+	
+	static AESKey last_symm_key;
+	static byte[] last_symm_key_bytes;
+	static byte[] last_symm_key_encrypted;
+	static RSAPublicKey last_cert_pk;
+	static byte[] last_challenge;
+	static byte[] last_challenge_with_subject;
+	static byte[] last_challenge_with_subject_encrypted;
+	static byte[] sp_auth_response;
+	static byte[] last_challenge_response_aes;
+	static byte[] last_challenge_response;
+	long chall_resp_long;
+	long chall_long;
+	static byte[] last_server_challenge;
+	static byte[] last_server_challenge_resp;
+	static byte[] last_server_challenge_resp_encrypted;
+	boolean check_auth_content = false;
+	
+	static byte[] last_query = new byte[0];
+	static byte[] query_item = new byte[0];
+	
 	private RSAPrivateKey common_sk = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
 	private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	private RSAPublicKey time_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	
 	private final static int LENGTH_RSA_512_BYTES = KeyBuilder.LENGTH_RSA_512/8;
-	//private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128/8;
+	private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128/8;
+	Cipher cipher;
+	RandomData srng;
+	Signature sig;
+	MessageDigest md;
 	
 	private int temp_int;
 	
@@ -183,12 +233,23 @@ public class IdentityCard extends Applet {
 			getSerial(apdu);
 			break;
 
-		// step1
+		// step 1
 		case HELLO_DIS:
 			validateHello(apdu);
 			break;
 		case NEW_TIME:
 			newTime(apdu);
+			break;
+			
+		// step 2
+		case NEW_SERVICE_CERT:
+			setServiceCertificate(apdu);
+			break;
+		case SERVICE_CERT_DONE:
+			treatServiceCertificate(apdu);
+			break;
+		case SERVICE_AUTH:
+			authenticateService(apdu);
 			break;
 
 		// If no matching instructions are found it is indicated in the status
@@ -273,7 +334,7 @@ public class IdentityCard extends Applet {
 		}
 	}
 
-	// STEP 1 ----
+	// STEP 1 ---------------------------------------------------------------------------------
 	// (2)
 	private void validateHello(APDU apdu) {
 		System.out.println("validateHello");
@@ -360,7 +421,164 @@ public class IdentityCard extends Applet {
 			ISOException.throwIt(SW_ABORT);
 	}
 
-	// STEP 2 ----
+	// STEP 2 --------------------------------------------------------------------------------
+	// step 2 (1)
+	private void setServiceCertificate(APDU apdu) {
+		byte[] buffer = apdu.getBuffer();
+		apdu.setIncomingAndReceive();
+		int buffer_length;
+		if (buffer[ISO7816.OFFSET_LC] <0){
+			buffer_length = buffer[ISO7816.OFFSET_LC] * -1;
+		} else {
+			buffer_length = buffer[ISO7816.OFFSET_LC];
+		}
+		byte[] temp = new byte[last_cert.length];
+		Util.arrayCopy(last_cert, (short)0, temp, (short)0, (short)temp.length);
+		last_cert = new byte[temp.length + buffer_length];
+		Util.arrayCopy(temp, (short)0, last_cert, (short)0, (short)temp.length);
+		Util.arrayCopy(buffer, (short)5, last_cert, (short)temp.length, (short)buffer_length);
+		System.out.println(byteArrayToHexString(last_cert));
+	}
+	private void treatServiceCertificate(APDU apdu) {
+		//get issuer cn
+		int issuer_cn_offset = arraySubstrIndex(last_cert, CN_BYTES) + CN_BYTES.length;
+		last_cert_issuer_cn = new byte[last_cert[issuer_cn_offset]];
+		Util.arrayCopy(last_cert, (short)(issuer_cn_offset+1), last_cert_issuer_cn, (short)0, (short)last_cert_issuer_cn.length);
+		//get issuer domain
+		int issuer_domain_offset = arraySubstrIndexFrom(last_cert, DOMAIN_BYTES, issuer_cn_offset) + DOMAIN_BYTES.length;
+		last_cert_issuer_domain = new byte[last_cert[issuer_domain_offset]];
+		Util.arrayCopy(last_cert, (short)(issuer_domain_offset+1), last_cert_issuer_domain, (short)0, (short)last_cert_issuer_domain.length);
+		//get valid after
+		int valid_after_offset = arraySubstrIndexFrom(last_cert, VALIDITY_BYTES, issuer_domain_offset) + VALIDITY_BYTES.length;
+		last_cert_valid_after = new byte[12];
+		Util.arrayCopy(last_cert, (short)valid_after_offset, last_cert_valid_after, (short)0, (short)last_cert_valid_after.length);
+		//get valid before
+		int valid_before_offset = arraySubstrIndexFrom(last_cert, VALIDITY_BYTES, valid_after_offset) + VALIDITY_BYTES.length;
+		last_cert_valid_before = new byte[12];
+		Util.arrayCopy(last_cert, (short)valid_before_offset, last_cert_valid_before, (short)0, (short)last_cert_valid_before.length);
+		//get subject cn
+		int subject_cn_offset = arraySubstrIndexFrom(last_cert, CN_BYTES, valid_before_offset) + CN_BYTES.length;
+		last_cert_subject_cn = new byte[last_cert[subject_cn_offset]];
+		Util.arrayCopy(last_cert, (short)(subject_cn_offset+1), last_cert_subject_cn, (short)0, (short)last_cert_subject_cn.length);
+		//get subject domain
+		int subject_domain_offset = arraySubstrIndexFrom(last_cert, DOMAIN_BYTES, subject_cn_offset) + DOMAIN_BYTES.length;
+		last_cert_subject_domain = new byte[last_cert[subject_domain_offset]];
+		Util.arrayCopy(last_cert, (short)(subject_domain_offset+1), last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length);
+		//get pk modulus
+		int modulus_offset = arraySubstrIndexFrom(last_cert, MODULUS_BYTES, subject_domain_offset) + MODULUS_BYTES.length;
+		last_cert_modulus = new byte[LENGTH_RSA_512_BYTES];
+		Util.arrayCopy(last_cert, (short)(modulus_offset), last_cert_modulus, (short)0, (short)last_cert_modulus.length);
+		//get pk exponent
+		int exponent_offset = modulus_offset + last_cert_modulus.length + 1;
+		last_cert_exponent = new byte[last_cert[exponent_offset]];
+		Util.arrayCopy(last_cert, (short)(exponent_offset+1), last_cert_exponent, (short)0, (short)last_cert_exponent.length);
+		//get signature
+		int signature_offset = arraySubstrIndexFrom(last_cert, SIGNATURE_BYTES, exponent_offset) + SIGNATURE_BYTES.length;
+		last_cert_signature = new byte[LENGTH_RSA_512_BYTES];
+		last_cert_tbs = new byte[signature_offset - SIGNATURE_BYTES.length - 4];
+		Util.arrayCopy(last_cert, (short)(signature_offset), last_cert_signature, (short)0, (short)last_cert_signature.length);
+		Util.arrayCopy(last_cert, (short)4, last_cert_tbs, (short)0, (short)last_cert_tbs.length);
+		
+		//verify
+		System.out.println("verify last cert");
+		System.out.println(byteArrayToHexString(last_cert_issuer_cn));
+		System.out.println(byteArrayToHexString(last_cert_issuer_domain));
+		System.out.println(byteArrayToHexString(last_cert_subject_cn));
+		System.out.println(byteArrayToHexString(last_cert_subject_domain));
+		System.out.println(byteArrayToHexString(last_cert_valid_after));
+		System.out.println(byteArrayToHexString(last_cert_valid_before));
+		System.out.println(byteArrayToHexString(last_cert_modulus));
+		System.out.println(byteArrayToHexString(last_cert_exponent));
+		System.out.println(byteArrayToHexString(last_cert_signature));
+	}
+	private void authenticateService(APDU apdu) {
+		//Step 2 (2) verify certificate
+		if (verifySig(last_cert_tbs, last_cert_signature, gov_pk) != false){
+			System.out.println("Certificate verified");
+		}else ISOException.throwIt(SW_SIG_NO_MATCH);
+		
+		//Step 2 (3) verify if certificate is valid
+		if (verifyValid(last_cert_valid_after, last_cert_valid_before, lastValidationTimeString) != false){
+			System.out.println("Certificate valid");
+		}else ISOException.throwIt(SW_CERT_EXPIRED);
+		
+		//Step 2 (4) generate new symmetric key
+		last_symm_key = (AESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_AES, KeyBuilder.LENGTH_AES_128, false);
+		genSymmKey();
+		last_symm_key.setKey(last_symm_key_bytes, (short)0);
+
+		//Step 2 (5) asymetrische encryptie with public key of service provider
+		last_cert_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+		last_cert_pk.setExponent(last_cert_exponent, (short)0, (short)last_cert_exponent.length);
+		last_cert_pk.setModulus(last_cert_modulus, (short)0, (short)last_cert_modulus.length);
+		cipher = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
+		cipher.init(last_cert_pk, Cipher.MODE_ENCRYPT);
+		last_symm_key_encrypted = new byte[LENGTH_RSA_512_BYTES];
+		cipher.doFinal(last_symm_key_bytes, (short)0, (short)last_symm_key_bytes.length, last_symm_key_encrypted, (short)0);
+		
+		//generate challenge
+		genChallenge(); 
+		//encrypt challenge with generated symmetric key
+		cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
+		cipher.init(last_symm_key, Cipher.MODE_ENCRYPT);
+		temp_int = last_challenge.length + last_cert_subject_cn.length + 2;
+		temp_int += LENGTH_AES_128_BYTES - (temp_int%16);
+		last_challenge_with_subject = new byte[temp_int];
+		last_challenge_with_subject[0] = (byte)last_challenge.length;
+		Util.arrayCopy(last_challenge, (short)0, last_challenge_with_subject, (short)1, (short)last_challenge.length);
+		last_challenge_with_subject[last_challenge.length+1] = (byte)last_cert_subject_cn.length;
+		Util.arrayCopy(last_cert_subject_cn, (short)0, last_challenge_with_subject, (short)(last_challenge.length+2), (short)last_cert_subject_cn.length);
+		last_challenge_with_subject_encrypted = new byte[temp_int];
+		cipher.doFinal(last_challenge_with_subject, (short)0, (short)last_challenge_with_subject.length, last_challenge_with_subject_encrypted, (short)0);
+		
+		System.out.println("sending this challenge: " + byteArrayToHexString(last_challenge));
+		System.out.println("sending this subject: " + byteArrayToHexString(last_challenge_with_subject));
+		System.out.println("sending this symm key: " + byteArrayToHexString(last_symm_key_bytes));
+		//generate the response array with the symmetric key and the challenge
+		// length + symm key + length + challenge with subject
+		sp_auth_response = new byte[1 + last_symm_key_encrypted.length + 1 + last_challenge_with_subject_encrypted.length];
+		sp_auth_response[0] = (byte)last_symm_key_encrypted.length;
+		Util.arrayCopy(last_symm_key_encrypted, (short)0, sp_auth_response, (short)1, (short)last_symm_key_encrypted.length);
+		sp_auth_response[last_symm_key_encrypted.length+1] = (byte)last_challenge_with_subject_encrypted.length;
+		Util.arrayCopy(last_challenge_with_subject_encrypted, (short)0, sp_auth_response, (short)(last_symm_key_encrypted.length+2), (short)last_challenge_with_subject_encrypted.length);
+		
+		//send response back to M
+		apdu.setOutgoing();
+		apdu.setOutgoingLength((short)sp_auth_response.length);
+		System.out.println("sending response with length " + sp_auth_response.length);
+		apdu.sendBytesLong(sp_auth_response,(short)0,(short)sp_auth_response.length);
+		
+	}
+	private boolean verifySig(byte[] message, byte[] signature, RSAPublicKey pk) {
+		System.out.println("verifying signature");
+		System.out.println(byteArrayToHexString(message));
+		System.out.println(byteArrayToHexString(signature));
+		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+		sig.init(pk, Signature.MODE_VERIFY);
+		return sig.verify(message, (short)0, (short)message.length, signature, (short)0, (short)signature.length);
+	}
+	private boolean verifyValid(byte[] cert_after, byte[] cert_before, byte[] time_string) {
+		System.out.println(byteArrayToHexString(cert_after));
+		System.out.println(byteArrayToHexString(cert_before));
+		System.out.println(byteArrayToHexString(time_string));
+		
+		String after = byteArrayToHexString(cert_after);
+		String before = byteArrayToHexString(cert_before);
+		String time = byteArrayToHexString(time_string);
+		
+		return (time.compareTo(after) > 0 && time.compareTo(before) < 0);
+	}
+	private void genSymmKey() {
+		last_symm_key_bytes = new byte[LENGTH_AES_128_BYTES];
+		srng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM); //ALG_SECURE_RANDOM NOT WORKING...
+		srng.generateData(last_symm_key_bytes, (short)0, (short)last_symm_key_bytes.length);
+	}
+	private void genChallenge() {
+		last_challenge = new byte[2];
+		srng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM);
+		srng.generateData(last_challenge, (short)0, (short)2);
+	}
+	
 
 	// STEP 3 ----
 

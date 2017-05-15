@@ -48,7 +48,7 @@ public class ProviderThread extends Thread {
 	private static RSAPrivateCrtKey service_key;
 	private static X509Certificate service_cert;
 	private static X509Certificate gov_cert;
-	private static byte[] my_cert_bytes;
+	private static byte[] service_cert_bytes;
 	
 	public void run() {
 		
@@ -84,6 +84,7 @@ public class ProviderThread extends Thread {
 
 	private void SendCertificate() throws FileNotFoundException {
 		
+		//get certificate from store
 		try {
 			getCertificate();
 		} catch (UnrecoverableKeyException e1) {
@@ -100,7 +101,8 @@ public class ProviderThread extends Thread {
 			e1.printStackTrace();
 		}
 		
-		
+		//send certificate to client (M)
+		outputWriter.println(byteArrayToHexString(service_cert_bytes));
 	}
 	
 	
@@ -113,7 +115,7 @@ public class ProviderThread extends Thread {
 			stream.close();
 			service_key = (RSAPrivateCrtKey) store.getKey(service, mypass);
 			service_cert = (X509Certificate) store.getCertificate(service);
-			my_cert_bytes = service_cert.getEncoded();
+			service_cert_bytes = service_cert.getEncoded();
 			gov_cert = (X509Certificate) store.getCertificate("gov");
 		} catch (KeyStoreException e) {
 			// TODO Auto-generated catch block
@@ -127,5 +129,32 @@ public class ProviderThread extends Thread {
 		return "";
 	}
 	
+	//helper functions --------------------------------------
+	private static byte[] hexStringToByteArray(String s) {
+	    int len = s.length();
+	    byte[] data = new byte[len / 2];
+	    for (int i = 0; i < len; i += 2) {
+	        data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+	                             + Character.digit(s.charAt(i+1), 16));
+	    }
+	    return data;
+	}
 	
+	private static String byteArrayToHexString(byte[] bytes){
+		final char[] hexArray = "0123456789ABCDEF".toCharArray();
+		char[] hexChars = new char[bytes.length * 2];
+	    for ( int j = 0; j < bytes.length; j++ ) {
+	        int v = bytes[j] & 0xFF;
+	        hexChars[j * 2] = hexArray[v >>> 4];
+	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+	    }
+	    return new String(hexChars);
+	}
+	
+	private static byte[] longToBytes(long x) {
+		ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE/8);
+			buffer.putLong(x);
+		return buffer.array();
+	}
+		
 }

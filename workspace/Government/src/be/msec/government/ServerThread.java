@@ -143,7 +143,7 @@ public class ServerThread extends Thread {
 	
 	
 	//helper functions --------------------------------------
-	public static byte[] hexStringToByteArray(String s) {
+	private static byte[] hexStringToByteArray(String s) {
 	    int len = s.length();
 	    byte[] data = new byte[len / 2];
 	    for (int i = 0; i < len; i += 2) {
@@ -153,7 +153,7 @@ public class ServerThread extends Thread {
 	    return data;
 	}
 	
-	public static String byteArrayToHexString(byte[] bytes){
+	private static String byteArrayToHexString(byte[] bytes){
 		final char[] hexArray = "0123456789ABCDEF".toCharArray();
 		char[] hexChars = new char[bytes.length * 2];
 	    for ( int j = 0; j < bytes.length; j++ ) {
@@ -164,7 +164,7 @@ public class ServerThread extends Thread {
 	    return new String(hexChars);
 	}
 	
-	public static byte[] longToBytes(long x) {
+	private static byte[] longToBytes(long x) {
 		ByteBuffer buffer = ByteBuffer.allocate(Long.SIZE/8);
 			buffer.putLong(x);
 		return buffer.array();

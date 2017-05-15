@@ -37,13 +37,23 @@ public class Client {
 	//from M -> SC
 	private static final byte HELLO_DIS = 0x40;
 	private static final byte NEW_TIME = 0x41;
+	private static final byte NEW_SERVICE_CERT = 0x42;
+	private static final byte SERVICE_CERT_DONE = 0x43;
+	private static final byte SERVICE_AUTH = 0x44;
+	private static final byte SERVICE_RESP_CHALLENGE = 0x45;
+	
 	
 	//from SC -> M
 	private final static short SW_ABORT = 0x6339;
 	private final static short SW_REQ_REVALIDATION = 0x6340;
+	private final static short SW_SIG_NO_MATCH = 0x6341;
+	private final static short SW_CERT_EXPIRED = 0x6342;
 	
 	//MESSAGES from M -> G
 	private final static String MSG_GET_TIME = "RevalidationRequest";
+	
+	//APDU
+	private static final int APDU_MAX_BUFF_SIZE = 128;
 	
 	//connection to card
 	IConnection con;
@@ -53,6 +63,11 @@ public class Client {
 	//UI variables
 	private JFrame frame;
     JTextArea communication;
+    
+    //SP connection
+    Socket providerSocket;
+	BufferedReader providerReader;
+	PrintWriter providerWriter;
 	
 	/**
 	 * Launch the application.
@@ -113,9 +128,14 @@ public class Client {
 			//step 1: updateTime()
 			updateTime();
 			//step 2: authenticateServiceProvider()
+			initConnectionServiceProvider();
 			authenticateServiceProvider();
 			//step 3: authenticateCard()
+			authenticateCard();
 			//step 4: releaseAttributes()
+			releaseAttributes();
+			
+			closeConnectionServiceProvider();
 			
 			
 		} catch (Exception e) {
@@ -256,18 +276,104 @@ public class Client {
 	}
 
 	//step 2
-	private void authenticateServiceProvider() throws IOException {
-		//connect to the SP
-		Socket providerSocket = new Socket("127.0.0.1", 8888);
+	private void initConnectionServiceProvider() throws IOException {
+		//connection to the SP
+		providerSocket = new Socket("127.0.0.1", 8888);
 		
-		InputStream inputStream = providerSocket.getInputStream();
-		OutputStream outputStream = providerSocket.getOutputStream();
+		InputStream providerInputStream = providerSocket.getInputStream();
+		OutputStream providerOutputStream = providerSocket.getOutputStream();
+		InputStreamReader providerInputStreamReader = new InputStreamReader(providerInputStream);
+		
+		providerReader = new BufferedReader(providerInputStreamReader);
+		providerWriter = new PrintWriter(providerOutputStream, true);
+	}
+	private void authenticateServiceProvider() throws Exception {
+		String certificateMessage = providerReader.readLine();
+		if (certificateMessage.equalsIgnoreCase("Abort")){
+        	communication.append("Error in connection with service provider\n");
+        	try {
+				throw new Exception("Error in service provider");
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }else{
+        	//System.out.println("Received: " + certificateMessage);
+        	//step 2(1) send certificate to card
+        	byte[] msg = hexStringToByteArray(certificateMessage);
+            for (int i=0; i <= msg.length/APDU_MAX_BUFF_SIZE; i++){
+				int msg_chunk_length = APDU_MAX_BUFF_SIZE;
+				if (msg.length-(i*APDU_MAX_BUFF_SIZE) < APDU_MAX_BUFF_SIZE){
+					msg_chunk_length = msg.length-(i*APDU_MAX_BUFF_SIZE);
+				}
+				if (msg_chunk_length > 0){
+					byte[] msg_chunk = new byte[msg_chunk_length];
+					System.arraycopy(msg, APDU_MAX_BUFF_SIZE*i, msg_chunk, 0, msg_chunk_length);
+					System.out.println(byteArrayToHexString(msg_chunk));
+					a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_SERVICE_CERT, 0x00, 0x00, msg_chunk);
+					res = con.transmit(a);
+					if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+				}
+			}
+            //SERVICE_CERT_DONE
+            a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CERT_DONE, 0x00, 0x00, new byte[]{0x00});
+			res = con.transmit(a);
+			if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+			System.out.println("Certificate sent");
+            
+			
+            //step 2 (2) -> (7) verify service certificate + timestamp + challenge from card
+			a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_AUTH, 0x00, 0x00, new byte[]{0x00});
+			res = con.transmit(a);
+			if(res.getSW()==SW_SIG_NO_MATCH){
+				communication.append("Problem with service certificate. Aborting.\n");
+				throw new Exception("Problem with service certificate. Aborting.\n");
+			}
+			//step 2 (3) - catch verify timestamp
+			else if(res.getSW()==SW_CERT_EXPIRED){
+				communication.append("Service provider certificate expired. Abort.\n");
+				throw new Exception("Service provider certificate expired");
+			}
+			else if(res.getSW()!=0x9000) throw new Exception("Exception..." + res.getSW());
+			
+			System.out.println("Certificate verified");
+			communication.append("Service provider certificate verified\n");
+			
+			
+			//step 2 (8)  Send symmetric key and challenge to service provider
+			byte[] sp_auth_response = res.getData();
+			providerWriter.println(byteArrayToHexString(sp_auth_response).substring(14)); //send only the data
+			//System.out.println(byteArrayToHexString(sp_auth_response));
+            //System.out.println("Client: " + byteArrayToHexString(sp_auth_response).substring(14));
+
+            // step 2 (13) send the response to the card
+            String serviceResponse = providerReader.readLine();
+            System.out.println("Service response: " + serviceResponse);
+            a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_RESP_CHALLENGE, 0x00, 0x00, hexStringToByteArray(serviceResponse));
+			res = con.transmit(a);
+			if (res.getSW()==SW_ABORT)throw new Exception("Not a correct response, aborting...");
+			else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+			
+			communication.append("Service is authenticated to card\n");
+			
+        }
+		
+	}
+	
+	//Step 3
+	private void authenticateCard() {
+		//Step 3 (1)
 		
 		
+	}
+	
+	//Step 4
+	private void releaseAttributes() {
 		
-		//close the socket
+	}
+	
+	private void closeConnectionServiceProvider() throws IOException {
 		providerSocket.close();
-		
 	}
 	
 	
