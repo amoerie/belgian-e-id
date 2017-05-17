@@ -71,11 +71,11 @@ public class IdentityCard extends Applet {
 	private byte[] gov_modulus_bytes;
 	private byte[] gov_exp_pub_bytes;
 	
-	//different domains - TODO !!!
+	//different domains
 	private final static String DOMAIN_DEFAULT_HEX = "64656661756C74";
 	private final static byte[] DOMAIN_DEFAULT_BYTES = hexStringToByteArray(DOMAIN_DEFAULT_HEX);
-	private final static String DOMAIN_ECOMMERCE_HEX = "65436F6D6D65726365";
-	private final static byte[] DOMAIN_ECOMMERCE_BYTES = hexStringToByteArray(DOMAIN_ECOMMERCE_HEX);
+	private final static String DOMAIN_SUPERMARKET_HEX = "65436F6D6D65726365";
+	private final static byte[] DOMAIN_SUPERMARKET_BYTES = hexStringToByteArray(DOMAIN_SUPERMARKET_HEX);
 	private final static String DOMAIN_EGOV_HEX = "65476F76";
 	private final static byte[] DOMAIN_EGOV_BYTES = hexStringToByteArray(DOMAIN_EGOV_HEX);
 	private final static String DOMAIN_SOCNET_HEX = "536F634E6574";
@@ -161,7 +161,7 @@ public class IdentityCard extends Applet {
 	private final static byte GENDER_IDX = (byte)6;
 	private final static byte PICTURE_IDX = (byte)7;
 	private final static byte[] DOMAIN_DEFAULT_AUTH = new byte[]{0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
-	private final static byte[] DOMAIN_ECOMMERCE_AUTH = new byte[]{0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00};
+	private final static byte[] DOMAIN_SUPERMARKET_AUTH = new byte[]{0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00};
 	private final static byte[] DOMAIN_EGOV_AUTH = new byte[]{0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00};
 	private final static byte[] DOMAIN_SOCNET_AUTH = new byte[]{0x01, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01};
 	//Mocking DATA
@@ -193,36 +193,20 @@ public class IdentityCard extends Applet {
 		pin = new OwnerPIN(PIN_TRY_LIMIT, PIN_SIZE);
 		pin.update(new byte[] { 0x01, 0x02, 0x03, 0x04 }, (short) 0, PIN_SIZE);
 
-		// TODO: certificates and common private key
-		//https://holtstrom.com/michael/tools/hextopem.php
-		//common_key_hex = "TODO";
-		//common_cert_hex = "30820243308201EDA003020102020900E34DA0275BBFFBD6300D06092A864886F70D01010B05003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303530373134323333355A170D3137303630363134323333355A3075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265305C300D06092A864886F70D0101010500034B003048024100CE832F1E76C683B0DD150F189660FF4D5A63478CC35BA6BB78BD2A061829BDD852889CFE04F44674933B146A5EB45276219FAB763BC589F696F6F0306C6D49950203010001A360305E301D0603551D0E04160414FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B301F0603551D23041830168014FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B300F0603551D130101FF040530030101FF300B0603551D0F040403020106300D06092A864886F70D01010B0500034100405D4CB97716896FFF73490439688CC24664DEF2977C316491D089C288530929C9A660FA0AD1A4ED8652419796143F4CF56D99AAF06C3FCC95999CE8693BEF8F";
+		// government certificates and common private key
+		//sha256
 		gov_cert_hex = "30820243308201EDA003020102020900E34DA0275BBFFBD6300D06092A864886F70D01010B05003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303530373134323333355A170D3137303630363134323333355A3075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265305C300D06092A864886F70D0101010500034B003048024100CE832F1E76C683B0DD150F189660FF4D5A63478CC35BA6BB78BD2A061829BDD852889CFE04F44674933B146A5EB45276219FAB763BC589F696F6F0306C6D49950203010001A360305E301D0603551D0E04160414FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B301F0603551D23041830168014FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B300F0603551D130101FF040530030101FF300B0603551D0F040403020106300D06092A864886F70D01010B0500034100405D4CB97716896FFF73490439688CC24664DEF2977C316491D089C288530929C9A660FA0AD1A4ED8652419796143F4CF56D99AAF06C3FCC95999CE8693BEF8F";
-		//common_key_bytes = hexStringToByteArray(common_key_hex);
-		//common_cert_bytes = hexStringToByteArray(common_cert_hex);
+		//sha1
+		//TODO gov_cert_hex = "";
 		gov_cert_bytes = hexStringToByteArray(gov_cert_hex);
 		
-		// TODO: byte arrays with modulus and exponents
-//		temp_int = arraySubstrIndex(common_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
-//		common_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
-//		Util.arrayCopy(common_cert_bytes, (short)temp_int, common_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
-//
-//		temp_int = arraySubstrIndex(common_key_bytes, EXPONENT_BYTES) + EXPONENT_BYTES.length;
-//		common_exp_priv_bytes = new byte[LENGTH_RSA_512_BYTES];
-//		Util.arrayCopy(common_key_bytes, (short)temp_int, common_exp_priv_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
-//		common_exp_pub_bytes = hexStringToByteArray("010001");
-//
 		temp_int = arraySubstrIndex(gov_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
 		gov_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
 		Util.arrayCopy(gov_cert_bytes, (short)temp_int, gov_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
 		gov_exp_pub_bytes = hexStringToByteArray("010001");
 
 
-		// TODO: make keys
-//		common_sk.setExponent(common_exp_priv_bytes, (short)0, (short)common_exp_priv_bytes.length);
-//		common_sk.setModulus(common_modulus_bytes, (short)0, (short)common_modulus_bytes.length);
-//		common_pk.setExponent(common_exp_pub_bytes, (short)0, (short)common_exp_pub_bytes.length);
-//		common_pk.setModulus(common_modulus_bytes, (short)0, (short)common_modulus_bytes.length);
+		// make keys
 		gov_pk.setExponent(gov_exp_pub_bytes, (short)0, (short)gov_exp_pub_bytes.length);
 		gov_pk.setModulus(gov_modulus_bytes, (short)0, (short)gov_modulus_bytes.length);
 		
@@ -846,9 +830,9 @@ public class IdentityCard extends Applet {
 			if ((short)DOMAIN_SOCNET_AUTH[(short)idx] == (short)1){
 				check_auth_content = true;
 			}
-		} else if (DOMAIN_ECOMMERCE_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_ECOMMERCE_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
-			System.out.println("ecommerce domain");
-			if ((short)DOMAIN_ECOMMERCE_AUTH[(short)idx] == (short)1){
+		} else if (DOMAIN_SUPERMARKET_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_SUPERMARKET_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
+			System.out.println("super market domain");
+			if ((short)DOMAIN_SUPERMARKET_AUTH[(short)idx] == (short)1){
 				check_auth_content = true;
 			}
 		}

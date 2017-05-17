@@ -10,14 +10,12 @@ import javax.swing.border.EmptyBorder;
 
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
-import javax.net.ssl.SSLServerSocketFactory;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.awt.event.ActionEvent;
 import java.awt.GridLayout;
 import javax.swing.SwingConstants;
@@ -32,6 +30,15 @@ public class Provider extends JFrame {
 	private JComboBox cbDomain;
 	private JComboBox cbService;
 	private JButton btnInitButton;
+	
+	public static JCheckBox chckbxNym;
+	public static JCheckBox chckbxName;
+	public static JCheckBox chckbxAddress;
+	public static JCheckBox chckbxCountry;
+	public static JCheckBox chckbxBirthdate;
+	public static JCheckBox chckbxAge;
+	public static JCheckBox chckbxGender;
+	public static JCheckBox chckbxPicture;
 	
 	public static JTextArea output;
 	public static JTextArea logging;
@@ -112,7 +119,7 @@ public class Provider extends JFrame {
 	}
 
 	private void initComponents() {
-		setBounds(100, 100, 450, 300);
+		setBounds(100, 100, 650, 300);
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
@@ -148,27 +155,27 @@ public class Provider extends JFrame {
 	    selectionPane.add(cbService);
 	    
 	    //row3
-	    JCheckBox chckbxNewCheckBox = new JCheckBox("nym");
-	    selectionPane.add(chckbxNewCheckBox);
-	    JCheckBox chckbxName = new JCheckBox("name");
+	    chckbxNym = new JCheckBox("nym");
+	    selectionPane.add(chckbxNym);
+	    chckbxName = new JCheckBox("name");
 	    selectionPane.add(chckbxName);
 	    
 	    //row4
-	    JCheckBox chckbxAddress = new JCheckBox("address");
+	    chckbxAddress = new JCheckBox("address");
 	    selectionPane.add(chckbxAddress);
-	    JCheckBox chckbxCountry = new JCheckBox("country");
+	    chckbxCountry = new JCheckBox("country");
 	    selectionPane.add(chckbxCountry);
 	    
 	    //row5
-	    JCheckBox chckbxBirthdate = new JCheckBox("birthdate");
+	    chckbxBirthdate = new JCheckBox("birthdate");
 	    selectionPane.add(chckbxBirthdate);
-	    JCheckBox chckbxAge = new JCheckBox("age");
+	    chckbxAge = new JCheckBox("age");
 	    selectionPane.add(chckbxAge);
 	    
 	    //row6
-	    JCheckBox chckbxGender = new JCheckBox("gender");
+	    chckbxGender = new JCheckBox("gender");
 	    selectionPane.add(chckbxGender);
-	    JCheckBox chckbxPicture = new JCheckBox("picture");
+	    chckbxPicture = new JCheckBox("picture");
 	    selectionPane.add(chckbxPicture);
 	    
 	    //Output Panel

@@ -232,9 +232,11 @@ public class Client {
 		System.setProperty("javax.net.debug", "ssl");
 		System.setProperty("javax.net.ssl.keyStoreType", "jks");
 		System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
+		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
 		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
 		System.setProperty("javax.net.ssl.trustStoreType", "jks");
 		System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
+		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
 		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 		
 		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());

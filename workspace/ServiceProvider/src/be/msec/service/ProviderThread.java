@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -24,8 +23,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -62,7 +62,10 @@ public class ProviderThread extends Thread {
 	private BufferedReader inputReader;
 	
 	//certificate                               
+	//sha256
 	private static String store_location = "src/belgianeid.jks";
+	//sha1
+	//private static String store_location = "src/belgianeidsha1.jks";
 	private static char[] mypass = "123456".toCharArray();
 	private static RSAPrivateCrtKey service_key;
 	private static X509Certificate service_cert;
@@ -77,7 +80,6 @@ public class ProviderThread extends Thread {
 	byte[] iv = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	
 	public void run() {
-		
 		
 		try {
 			
@@ -114,19 +116,9 @@ public class ProviderThread extends Thread {
 		//get certificate from store
 		try {
 			getCertificate();
-		} catch (UnrecoverableKeyException e1) {
-			// TODO Auto-generated catch block
+		} catch (UnrecoverableKeyException | NoSuchAlgorithmException | CertificateException | IOException e1) {
 			e1.printStackTrace();
-		} catch (NoSuchAlgorithmException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (CertificateException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+		} 
 		
 		//send certificate to client (M)
 		outputWriter.println(byteArrayToHexString(service_cert_bytes));
@@ -311,10 +303,24 @@ public class ProviderThread extends Thread {
         		Boolean sig_verify = sig.verify(service_challenge_resp);
             	
             	//send query for card data.
-        		
-        		String[] request = null; // TODO: GetAskedData() from check boxes: example: 
-        		//String[] values = new String[] {"nym", "name", "address", "country", "birthdate", "age", "gender", "picture"};
-        		
+        		List<String> listAskedFields = new ArrayList<String>();
+        		if (Provider.chckbxNym.isSelected())
+        			listAskedFields.add("nym");
+        		if (Provider.chckbxName.isSelected())
+        			listAskedFields.add("name");
+        		if (Provider.chckbxAddress.isSelected())
+        			listAskedFields.add("address");
+        		if (Provider.chckbxCountry.isSelected())
+        			listAskedFields.add("country");
+        		if (Provider.chckbxBirthdate.isSelected())
+        			listAskedFields.add("birthdate");
+        		if (Provider.chckbxAge.isSelected())
+        			listAskedFields.add("age");
+        		if (Provider.chckbxGender.isSelected())
+        			listAskedFields.add("gender");
+        		if (Provider.chckbxPicture.isSelected())
+        			listAskedFields.add("picture");
+        		String[] request = listAskedFields.toArray(new String[listAskedFields.size()]);
         		
         		if (sig_verify != false){
         			Boolean card_authenticated = true;
