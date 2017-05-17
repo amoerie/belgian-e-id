@@ -26,13 +26,20 @@ import javax.smartcardio.CommandAPDU;
 import javax.smartcardio.ResponseAPDU;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
 
 public class Client {
 
 	
 	//global variables
-	private final static byte IDENTITY_CARD_CLA =(byte)0x80;
+	private final static byte IDENTITY_CARD_CLA = (byte) 0x80;
+	private static final byte VALIDATE_PIN_INS = 0x22;
+	private static final byte GET_SERIAL_INS = 0x24;
+	
 	
 	//from M -> SC
 	private static final byte HELLO_DIS = 0x40;
@@ -41,13 +48,19 @@ public class Client {
 	private static final byte SERVICE_CERT_DONE = 0x43;
 	private static final byte SERVICE_AUTH = 0x44;
 	private static final byte SERVICE_RESP_CHALLENGE = 0x45;
+	private static final byte SERVICE_CHALLENGE = 0x46;
+	private static final byte NEW_QUERY = 0x47;
+	private static final byte QUERY_DONE = 0x48;
+	private static final byte GET_QUERY = 0x49;
 	
 	
 	//from SC -> M
+	private final static short SW_PIN_VERIFICATION_REQUIRED = 0x6301;
 	private final static short SW_ABORT = 0x6339;
 	private final static short SW_REQ_REVALIDATION = 0x6340;
 	private final static short SW_SIG_NO_MATCH = 0x6341;
 	private final static short SW_CERT_EXPIRED = 0x6342;
+	private final static short SW_VERIFICATION_FAILED = 0x6343;
 	
 	//MESSAGES from M -> G
 	private final static String MSG_GET_TIME = "RevalidationRequest";
@@ -131,9 +144,9 @@ public class Client {
 			initConnectionServiceProvider();
 			authenticateServiceProvider();
 			//step 3: authenticateCard()
-			authenticateCard();
+			String serviceResponse = authenticateCard();
 			//step 4: releaseAttributes()
-			releaseAttributes();
+			releaseAttributes(serviceResponse);
 			
 			closeConnectionServiceProvider();
 			
@@ -361,15 +374,119 @@ public class Client {
 	}
 	
 	//Step 3
-	private void authenticateCard() {
+	private String authenticateCard() throws Exception {
 		//Step 3 (1)
-		
+		String service_chall_response_hex = "";
+		int j = 0;
+		a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CHALLENGE, 0x00, 0x00, new byte[]{(byte)j});
+		res = con.transmit(a);
+		byte[] service_chall_response = res.getData();
+		while (Integer.parseInt(byteArrayToHexString(new byte[]{service_chall_response[6]}), 16) > 0){
+			System.out.println("response part " + j);
+			j++;
+			System.out.println(byteArrayToHexString(service_chall_response));
+			service_chall_response_hex = service_chall_response_hex + byteArrayToHexString(service_chall_response).substring(14);
+			a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CHALLENGE, 0x00, 0x00, new byte[]{(byte)j});
+			res = con.transmit(a);
+			service_chall_response = res.getData();
+		}
+        
+		System.out.println("Client: " + service_chall_response_hex);
+        providerWriter.println(service_chall_response_hex);
+        
+        String serviceResponse = providerReader.readLine();
+        System.out.println("Server: " + serviceResponse);
+        communication.append("Server requests: " + new String(hexStringToByteArray(serviceResponse)) + "\n");
+        
+        return serviceResponse;
 		
 	}
 	
 	//Step 4
-	private void releaseAttributes() {
+	private void releaseAttributes(String serviceResponse) throws Exception {
+		// send query to card
+		byte[] msg = hexStringToByteArray(serviceResponse);
+        for (int i=0; i <= msg.length/APDU_MAX_BUFF_SIZE; i++){
+			int msg_chunk_length = APDU_MAX_BUFF_SIZE;
+			if (msg.length-(i * APDU_MAX_BUFF_SIZE) < APDU_MAX_BUFF_SIZE){
+				msg_chunk_length = msg.length - ( i * APDU_MAX_BUFF_SIZE);
+			}
+			if (msg_chunk_length > 0){
+				byte[] msg_chunk = new byte[msg_chunk_length];
+				System.arraycopy(msg, APDU_MAX_BUFF_SIZE*i, msg_chunk, 0, msg_chunk_length);
+				System.out.println(byteArrayToHexString(msg_chunk));
+				a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_QUERY, 0x00, 0x00, msg_chunk);
+				res = con.transmit(a);
+				if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+			}
+		}
+		a = new CommandAPDU(IDENTITY_CARD_CLA, QUERY_DONE, 0x00, 0x00, new byte[]{0x00});
+		res = con.transmit(a);
+		if (res.getSW()==SW_ABORT){
+            System.out.println("Client: " + "Aborting... bad query");
+            providerWriter.println("Badquery");
+			throw new Exception("Aborted: Bad query from server");
+		} else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+		System.out.println("Query sent");
+        
+		communication.append("PIN required\n");
 		
+		//get the user's pin code from screen
+		JPanel panel = new JPanel();
+		JLabel label = new JLabel("Enter your PIN:");
+		JPasswordField pass = new JPasswordField(4);
+		panel.add(label);
+		panel.add(pass);
+		String[] options = new String[]{"OK", "Cancel"};
+		int option = 1;
+		int pin_result = SW_VERIFICATION_FAILED;
+		while (option != 0 || pin_result==SW_VERIFICATION_FAILED){
+			option = JOptionPane.showOptionDialog(null, panel, "PIN required",
+                     JOptionPane.NO_OPTION, JOptionPane.PLAIN_MESSAGE,
+                     null, options, options[1]);
+			if(option == 0) // pressing OK button
+			{
+			    char[] password = pass.getPassword();
+			    System.out.println("PIN: " + new String(password));
+			    
+			    byte[] pin_array = new byte[4];
+			    for (int k=0; k<pin_array.length; k++){
+				    pin_array[k] = (byte) Character.getNumericValue(password[k]);
+			    }
+			    
+			    a = new CommandAPDU(IDENTITY_CARD_CLA, VALIDATE_PIN_INS, 0x00, 0x00,pin_array);
+				res = con.transmit(a);
+				pin_result=res.getSW();
+				
+				System.out.println(res);
+			}
+		}
+		if(pin_result!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
+		System.out.println("PIN Verified");
+		communication.append("PIN OK!\n");
+		
+		//Step 4 (10) - Send query result to sp
+		String query = "";
+		int j = 0;
+		a = new CommandAPDU(IDENTITY_CARD_CLA, GET_QUERY, 0x00, 0x00, new byte[]{(byte)j});
+		res = con.transmit(a);
+		byte[] query_chunk = res.getData();
+		while (Integer.parseInt(byteArrayToHexString(new byte[]{query_chunk[6]}), 16) > 0){
+			System.out.println("response part " + j);
+			j++;
+			System.out.println(byteArrayToHexString(query_chunk));
+			query = query + byteArrayToHexString(query_chunk).substring(14);
+			a = new CommandAPDU(IDENTITY_CARD_CLA, GET_QUERY, 0x00, 0x00, new byte[]{(byte)j});
+			res = con.transmit(a);
+			query_chunk = res.getData();
+		}
+		
+        System.out.println("Client: " + query);
+        providerWriter.println(query);
+        
+        System.out.println("Server: " + providerReader.readLine());
+        
+        communication.append("Data is sent to server. Check the output tab!\n");
 	}
 	
 	private void closeConnectionServiceProvider() throws IOException {

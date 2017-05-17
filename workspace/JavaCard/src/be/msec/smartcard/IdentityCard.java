@@ -11,15 +11,13 @@ import javacardx.crypto.*;
 
 public class IdentityCard extends Applet {
 	private final static byte IDENTITY_CARD_CLA = (byte) 0x80;
-
 	private static final byte VALIDATE_PIN_INS = 0x22;
 	private static final byte GET_SERIAL_INS = 0x24;
 
 	private final static byte PIN_TRY_LIMIT = (byte) 0x03;
 	private final static byte PIN_SIZE = (byte) 0x04;
 
-	private final static short SW_VERIFICATION_FAILED = 0x6300;
-	private final static short SW_PIN_VERIFICATION_REQUIRED = 0x6301;
+	private static final int APDU_MAX_BUFF_SIZE = 128;
 
 	//from M -> SC
 	private static final byte HELLO_DIS = 0x40;
@@ -28,13 +26,19 @@ public class IdentityCard extends Applet {
 	private static final byte SERVICE_CERT_DONE = 0x43;
 	private static final byte SERVICE_AUTH = 0x44;
 	private static final byte SERVICE_RESP_CHALLENGE = 0x45;
+	private static final byte SERVICE_CHALLENGE = 0x46;
+	private static final byte NEW_QUERY = 0x47;
+	private static final byte QUERY_DONE = 0x48;
+	private static final byte GET_QUERY = 0x49;
 		
 		
 	//from SC -> M
+	private final static short SW_PIN_VERIFICATION_REQUIRED = 0x6301;
 	private final static short SW_ABORT = 0x6339;
 	private final static short SW_REQ_REVALIDATION = 0x6340;
 	private final static short SW_SIG_NO_MATCH = 0x6341;
 	private final static short SW_CERT_EXPIRED = 0x6342;
+	private final static short SW_VERIFICATION_FAILED = 0x6343;
 
 	//last variables
 	static byte[] last_message = new byte[0];
@@ -45,10 +49,11 @@ public class IdentityCard extends Applet {
 	static byte[] last_exp = hexStringToByteArray("010001");
 	
 	// timestamps
-	byte[] lastValidationTime = new byte[] { 0x00 }; // (20)000101000000
-	byte[] lastValidationTimeString = hexStringToByteArray("303030313031303030303030"); // (20)000101000000
+	private byte[] lastValidationTime = new byte[] { 0x00 }; // (20)000101000000
+	private byte[] lastValidationTimeString = hexStringToByteArray("303030313031303030303030"); // (20)000101000000
 	private final static long VALIDATION_TIME = 24 * 60 * 60;
 	private final static byte TIMESTAMP_SIZE = (byte) 0x12;
+	
 
 	
 	//certificates - start \\\\
@@ -65,6 +70,16 @@ public class IdentityCard extends Applet {
 	private byte[] gov_cert_bytes;
 	private byte[] gov_modulus_bytes;
 	private byte[] gov_exp_pub_bytes;
+	
+	//different domains - TODO !!!
+	private final static String DOMAIN_DEFAULT_HEX = "64656661756C74";
+	private final static byte[] DOMAIN_DEFAULT_BYTES = hexStringToByteArray(DOMAIN_DEFAULT_HEX);
+	private final static String DOMAIN_ECOMMERCE_HEX = "65436F6D6D65726365";
+	private final static byte[] DOMAIN_ECOMMERCE_BYTES = hexStringToByteArray(DOMAIN_ECOMMERCE_HEX);
+	private final static String DOMAIN_EGOV_HEX = "65476F76";
+	private final static byte[] DOMAIN_EGOV_BYTES = hexStringToByteArray(DOMAIN_EGOV_HEX);
+	private final static String DOMAIN_SOCNET_HEX = "536F634E6574";
+	private final static byte[] DOMAIN_SOCNET_BYTES = hexStringToByteArray(DOMAIN_SOCNET_HEX);
 	
 	//storage to process certificate
 	static byte[] last_cert_issuer_cn;
@@ -110,6 +125,10 @@ public class IdentityCard extends Applet {
 	Signature sig;
 	MessageDigest md;
 	
+	byte[] query_result;
+	byte[] query_result_encrypted;
+	
+	
 	private int temp_int;
 	
 	//certificates - end \\\\
@@ -131,6 +150,32 @@ public class IdentityCard extends Applet {
 	private final static byte[] VALIDITY_BYTES = hexStringToByteArray(VALIDITY_HEX);
 		
 	//keywords - end \\\\
+	
+	//Data fields
+	private final static byte NYM_IDX = (byte)0;
+	private final static byte NAME_IDX = (byte)1;
+	private final static byte ADDRESS_IDX = (byte)2;
+	private final static byte COUNTRY_IDX = (byte)3;
+	private final static byte BIRTHDATE_IDX = (byte)4;
+	private final static byte AGE_IDX = (byte)5;
+	private final static byte GENDER_IDX = (byte)6;
+	private final static byte PICTURE_IDX = (byte)7;
+	private final static byte[] DOMAIN_DEFAULT_AUTH = new byte[]{0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00};
+	private final static byte[] DOMAIN_ECOMMERCE_AUTH = new byte[]{0x01, 0x01, 0x01, 0x01, 0x00, 0x01, 0x00, 0x00};
+	private final static byte[] DOMAIN_EGOV_AUTH = new byte[]{0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00};
+	private final static byte[] DOMAIN_SOCNET_AUTH = new byte[]{0x01, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01};
+	//Mocking DATA
+	private static byte[] NYM = null;
+	private final static byte[] NAME = "Tom Alex".getBytes();
+	private final static byte[] ADDRESS = "Kerkstraat 1, 9340 Lede".getBytes();
+	private final static byte[] COUNTRY = "BE".getBytes();
+	private final static byte[] BIRTHDATE = "18/02/1978".getBytes();
+	private final static byte[] AGE = "39".getBytes();
+	private final static byte[] GENDER = "M".getBytes();
+	private final static byte[] PICTURE = "\n|==========|\n|          |\n|  O   O   |\n|    0     |\n| \\      / |\n|  ------  |\n\\         /\n  =======".getBytes();
+	
+	
+	
 
 	private Boolean isServiceAuthenticated = false;
 	private Boolean isPinValidated = false;
@@ -258,6 +303,27 @@ public class IdentityCard extends Applet {
 			verifyServiceRespChallenge(apdu);
 			break;
 
+		// step 3
+		case SERVICE_CHALLENGE:
+			sendServerChallengeResponse(apdu);
+			break;
+		
+		// step 4
+		case NEW_QUERY:
+			setLastQuery(apdu);
+			break;
+		case QUERY_DONE:
+			processLastQuery(apdu);
+			break;
+		//case VALIDATE_PIN_INS - already defined
+		case GET_QUERY:
+			if (isServiceAuthenticated != false && isPinValidated != false){
+				sendQueryResult(apdu);
+			} else {
+				ISOException.throwIt(SW_ABORT);
+			}
+			break;
+			
 		// If no matching instructions are found it is indicated in the status
 		// word of the response.
 		// given that indicates
@@ -645,8 +711,201 @@ public class IdentityCard extends Applet {
 	
 
 	// STEP 3 ----
+	private void sendServerChallengeResponse(APDU apdu){
+		byte[] buffer = apdu.getBuffer();
+		apdu.setIncomingAndReceive();
+		short i = (short)buffer[ISO7816.OFFSET_CDATA];
+		if (i<=last_server_challenge_resp_encrypted.length/APDU_MAX_BUFF_SIZE){
+			int my_message_part_length = APDU_MAX_BUFF_SIZE;
+			if (last_server_challenge_resp_encrypted.length-(i*APDU_MAX_BUFF_SIZE) < APDU_MAX_BUFF_SIZE){
+				my_message_part_length = last_server_challenge_resp_encrypted.length-(i*APDU_MAX_BUFF_SIZE);
+			}
+			if (my_message_part_length > 0){
+				byte[] my_message_part = new byte[my_message_part_length];
+				System.arraycopy(last_server_challenge_resp_encrypted, APDU_MAX_BUFF_SIZE*i, my_message_part, 0, my_message_part_length);
+				System.out.println(byteArrayToHexString(my_message_part));
+				apdu.setOutgoing();
+				apdu.setOutgoingLength((short)my_message_part_length);
+				System.out.println("sending response with length " + my_message_part_length);
+				apdu.sendBytesLong(my_message_part,(short)0,(short)my_message_part_length);
+			}
+		} else {
+			apdu.setOutgoing();
+			apdu.setOutgoingLength((short)0);
+			apdu.sendBytesLong(new byte[0],(short)0,(short)0);
+		}
+	}	
+	
 
 	// STEP 4 ----
+	private void setLastQuery(APDU apdu) {
+		byte[] buffer = apdu.getBuffer();
+		apdu.setIncomingAndReceive();
+		int buffer_length;
+		if (buffer[ISO7816.OFFSET_LC] <0){
+			buffer_length = buffer[ISO7816.OFFSET_LC] * -1;
+		} else {
+			buffer_length = buffer[ISO7816.OFFSET_LC];
+		}
+		byte[] temp = new byte[last_query.length];
+		Util.arrayCopy(last_query, (short)0, temp, (short)0, (short)temp.length);
+		last_query = new byte[temp.length + buffer_length];
+		Util.arrayCopy(temp, (short)0, last_query, (short)0, (short)temp.length);
+		Util.arrayCopy(buffer, (short)5, last_query, (short)temp.length, (short)buffer_length);
+		System.out.println(byteArrayToHexString(last_query));
+	}
+	private void processLastQuery(APDU apdu) {
+		// TODO Auto-generated method stub
+		temp_int = 0;
+		query_result = new byte[(short)0];
+		while (temp_int < last_query.length){
+			query_item = new byte[(short)last_query[temp_int]];
+			Util.arrayCopy(last_query, (short)(temp_int+1), query_item, (short)0, (short)query_item.length);
+			
+			if ("nym".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "nym".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested nym");
+				if (checkAuthorized(NYM_IDX, "nym".getBytes(), genNym()) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("name".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "name".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested name");
+				if (checkAuthorized(NAME_IDX, "name".getBytes(), NAME) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("address".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "address".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested address");
+				if (checkAuthorized(ADDRESS_IDX, "address".getBytes(), ADDRESS) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("country".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "country".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested country");
+				if (checkAuthorized(COUNTRY_IDX, "country".getBytes(), COUNTRY) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("birthdate".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "birthdate".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested birthdate");
+				if (checkAuthorized(BIRTHDATE_IDX, "birthdate".getBytes(), BIRTHDATE) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("age".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "age".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested age");
+				if (checkAuthorized(AGE_IDX, "age".getBytes(), AGE) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("gender".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "gender".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested gender");
+				if (checkAuthorized(GENDER_IDX, "gender".getBytes(), GENDER) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			} else if ("picture".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "picture".getBytes(), (short)0, (short)query_item.length) == 0){
+				System.out.println("requested picture");
+				if (checkAuthorized(PICTURE_IDX, "picture".getBytes(), PICTURE) == false){
+					ISOException.throwIt(SW_ABORT);
+					break;
+				}
+			}
+			
+			
+			temp_int++;
+			temp_int += query_item.length;
+		}
+		System.out.println("loop done");
+		
+		//encrypt the query result
+		temp_int = query_result.length;
+		temp_int += LENGTH_AES_128_BYTES - (temp_int%16);
+		byte[] query_result_aes = new byte[temp_int];
+		Util.arrayCopy(query_result, (short)0, query_result_aes, (short)(0), (short)query_result.length);
+		cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
+		cipher.init(last_symm_key, Cipher.MODE_ENCRYPT);
+		query_result_encrypted = new byte[temp_int];
+		cipher.doFinal(query_result_aes, (short)0, (short)query_result_aes.length, query_result_encrypted, (short)0);
+		
+	}
+	private boolean checkAuthorized(byte idx, byte[] param, byte[] val) {
+		check_auth_content = false;
+		if (DOMAIN_DEFAULT_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_DEFAULT_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
+			System.out.println("default domain");
+			if ((short)DOMAIN_DEFAULT_AUTH[(short)idx] == (short)1){
+				check_auth_content = true;
+			}
+		} else if (DOMAIN_EGOV_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_EGOV_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
+			System.out.println("egov domain");
+			if ((short)DOMAIN_EGOV_AUTH[(short)idx] == (short)1){
+				check_auth_content = true;
+			}
+		} else if (DOMAIN_SOCNET_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_SOCNET_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
+			System.out.println("socnet domain");
+			if ((short)DOMAIN_SOCNET_AUTH[(short)idx] == (short)1){
+				check_auth_content = true;
+			}
+		} else if (DOMAIN_ECOMMERCE_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_ECOMMERCE_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
+			System.out.println("ecommerce domain");
+			if ((short)DOMAIN_ECOMMERCE_AUTH[(short)idx] == (short)1){
+				check_auth_content = true;
+			}
+		}
+		
+		if (check_auth_content != false){
+			byte[] temp_array = new byte[(short)query_result.length];
+			if(temp_array.length > 0){
+				Util.arrayCopy(query_result, (short)0, temp_array, (short)0, (short)temp_array.length);
+			}
+			query_result = new byte[(short)(temp_array.length + 2 + param.length + val.length)];
+			if(temp_array.length > 0){
+				Util.arrayCopy(temp_array, (short)0, query_result, (short)0, (short)temp_array.length);
+			}
+			query_result[temp_array.length] = (byte)param.length;
+			Util.arrayCopy(param, (short)0, query_result, (short)(temp_array.length+1), (short)param.length);
+			query_result[temp_array.length+1+param.length] = (byte)val.length;
+			Util.arrayCopy(val, (short)0, query_result, (short)(temp_array.length+1+param.length+1), (short)val.length);
+		}
+		return check_auth_content;
+	}
+	private byte[] genNym() {
+		md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
+		NYM = new byte[MessageDigest.LENGTH_SHA];
+		byte[] temp_array = new byte[last_cert_subject_cn.length + serial.length];
+		Util.arrayCopy(serial, (short)0, temp_array, (short)(0), (short)serial.length);
+		Util.arrayCopy(last_cert_subject_cn, (short)0, temp_array, (short)(serial.length), (short)last_cert_subject_cn.length);
+		md.doFinal(temp_array, (short)0, (short)temp_array.length, NYM, (short)0);
+		return NYM;
+	}
+	private void sendQueryResult(APDU apdu) {
+		byte[] buffer = apdu.getBuffer();
+		apdu.setIncomingAndReceive();
+		short i = (short)buffer[ISO7816.OFFSET_CDATA];
+		if (i<=query_result_encrypted.length/APDU_MAX_BUFF_SIZE){
+			int my_message_part_length = APDU_MAX_BUFF_SIZE;
+			if (query_result_encrypted.length-(i*APDU_MAX_BUFF_SIZE) < APDU_MAX_BUFF_SIZE){
+				my_message_part_length = query_result_encrypted.length-(i*APDU_MAX_BUFF_SIZE);
+			}
+			if (my_message_part_length > 0){
+				byte[] my_message_part = new byte[my_message_part_length];
+				System.arraycopy(query_result_encrypted, APDU_MAX_BUFF_SIZE*i, my_message_part, 0, my_message_part_length);
+				System.out.println(byteArrayToHexString(my_message_part));
+				apdu.setOutgoing();
+				apdu.setOutgoingLength((short)my_message_part_length);
+				System.out.println("sending response with length " + my_message_part_length);
+				apdu.sendBytesLong(my_message_part,(short)0,(short)my_message_part_length);
+			}
+		} else {
+			apdu.setOutgoing();
+			apdu.setOutgoingLength((short)0);
+			apdu.sendBytesLong(new byte[0],(short)0,(short)0);
+		}
+	}
+
+	
+	
+	
 
 	// ------ help functions
 	// ------------------------------------------------------
