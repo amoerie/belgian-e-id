@@ -43,7 +43,7 @@ public class IdentityCard extends Applet {
 	//last variables
 	static byte[] last_message = new byte[0];
 	static byte[] last_signature = new byte[0];
-	static byte[] last_cert = new byte[0];
+	static byte[] lastCert = new byte[0];
 	static RSAPublicKey last_pk;
 	static byte[] last_modulus;
 	static byte[] last_exp = hexStringToByteArray("010001");
@@ -52,21 +52,19 @@ public class IdentityCard extends Applet {
 	private byte[] lastValidationTime = new byte[] { 0x00 }; // (20)000101000000
 	private byte[] lastValidationTimeString = hexStringToByteArray("303030313031303030303030"); // (20)000101000000
 	private final static long VALIDATION_TIME = 24 * 60 * 60;
-	private final static byte TIMESTAMP_SIZE = (byte) 0x12;
-	
+	//private final static byte TIMESTAMP_SIZE = (byte) 0x12;
 
-	
 	//certificates - start \\\\
-	private String common_key_hex;
-	private String common_cert_hex;
+	//private String common_key_hex;
+	//private String common_cert_hex;
 	private String gov_cert_hex;
 	
-	private byte[] common_key_bytes;
+	//private byte[] common_key_bytes;
 	private byte[] common_cert_bytes;
-	private byte[] common_modulus_bytes;
-	private byte[] common_exp_priv_bytes;
-	private byte[] common_exp_pub_bytes;
-	private byte[] common_sig_bytes;
+	//private byte[] common_modulus_bytes;
+	//private byte[] common_exp_priv_bytes;
+	//private byte[] common_exp_pub_bytes;
+	//private byte[] common_sig_bytes;
 	private byte[] gov_cert_bytes;
 	private byte[] gov_modulus_bytes;
 	private byte[] gov_exp_pub_bytes;
@@ -82,7 +80,7 @@ public class IdentityCard extends Applet {
 	private final static byte[] DOMAIN_SOCNET_BYTES = hexStringToByteArray(DOMAIN_SOCNET_HEX);
 	
 	//storage to process certificate
-	static byte[] last_cert_issuer_cn;
+	static byte[] lastCertIssuer;
 	static byte[] last_cert_issuer_domain;
 	static byte[] last_cert_subject_cn;
 	static byte[] last_cert_subject_domain;
@@ -100,7 +98,7 @@ public class IdentityCard extends Applet {
 	static byte[] last_challenge;
 	static byte[] last_challenge_with_subject;
 	static byte[] last_challenge_with_subject_encrypted;
-	static byte[] sp_auth_response;
+	static byte[] serviceAuthResponse;
 	static byte[] last_challenge_response_aes;
 	static byte[] last_challenge_response;
 	long chall_resp_long;
@@ -108,40 +106,37 @@ public class IdentityCard extends Applet {
 	static byte[] last_server_challenge;
 	static byte[] last_server_challenge_resp;
 	static byte[] last_server_challenge_resp_encrypted;
-	boolean check_auth_content = false;
+	boolean hasCheckAuthContent = false;
 	
 	static byte[] last_query = new byte[0];
-	static byte[] query_item = new byte[0];
+	static byte[] queryItem = new byte[0];
 	
 	private RSAPrivateKey common_sk = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
-	private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+	//private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
-	private RSAPublicKey time_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+	//private RSAPublicKey time_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	
 	private final static int LENGTH_RSA_512_BYTES = KeyBuilder.LENGTH_RSA_512/8;
 	private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128/8;
-	Cipher cipher;
-	RandomData srng;
-	Signature sig;
-	MessageDigest md;
+	private Cipher cipher;
+	private RandomData srng;
+	private Signature sig;
+	private MessageDigest md;
 	
-	byte[] query_result;
+	byte[] queryResult;
 	byte[] query_result_encrypted;
-	
-	
-	private int temp_int;
-	
+
 	//certificates - end \\\\
 	
 	//keywords - start \\\\
 	private final static String MODULUS_HEX = "024100";
 	private final static byte[] MODULUS_BYTES = hexStringToByteArray(MODULUS_HEX);
-	private final static String EXPONENT_HEX = "010240";
-	private final static byte[] EXPONENT_BYTES = hexStringToByteArray(EXPONENT_HEX);
+	//private final static String EXPONENT_HEX = "010240";
+	//private final static byte[] EXPONENT_BYTES = hexStringToByteArray(EXPONENT_HEX);
 	private final static String SIGNATURE_HEX = "300D06092A864886F70D0101050500034100";
 	private final static byte[] SIGNATURE_BYTES = hexStringToByteArray(SIGNATURE_HEX);
-	private final static String CERT_HEX = "308201"; // +1byte
-	private final static byte[] CERT_BYTES = hexStringToByteArray(CERT_HEX);
+	//private final static String CERT_HEX = "308201"; // +1byte
+	//private final static byte[] CERT_BYTES = hexStringToByteArray(CERT_HEX);
 	private final static String DOMAIN_HEX = "060A0992268993F22C64040D0C";
 	private final static byte[] DOMAIN_BYTES = hexStringToByteArray(DOMAIN_HEX);
 	private final static String CN_HEX = "06035504030C";
@@ -173,9 +168,6 @@ public class IdentityCard extends Applet {
 	private final static byte[] AGE = "39".getBytes();
 	private final static byte[] GENDER = "M".getBytes();
 	private final static byte[] PICTURE = "\n|==========|\n|          |\n|  O   O   |\n|    0     |\n| \\      / |\n|  ------  |\n\\         /\n  =======".getBytes();
-	
-	
-	
 
 	private Boolean isServiceAuthenticated = false;
 	private Boolean isPinValidated = false;
@@ -197,20 +189,18 @@ public class IdentityCard extends Applet {
 		//sha256
 		gov_cert_hex = "30820243308201EDA003020102020900E34DA0275BBFFBD6300D06092A864886F70D01010B05003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303530373134323333355A170D3137303630363134323333355A3075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265305C300D06092A864886F70D0101010500034B003048024100CE832F1E76C683B0DD150F189660FF4D5A63478CC35BA6BB78BD2A061829BDD852889CFE04F44674933B146A5EB45276219FAB763BC589F696F6F0306C6D49950203010001A360305E301D0603551D0E04160414FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B301F0603551D23041830168014FAFF2F7386E7AF24F46EA5EA734F703CD8E3407B300F0603551D130101FF040530030101FF300B0603551D0F040403020106300D06092A864886F70D01010B0500034100405D4CB97716896FFF73490439688CC24664DEF2977C316491D089C288530929C9A660FA0AD1A4ED8652419796143F4CF56D99AAF06C3FCC95999CE8693BEF8F";
 		//sha1
-		//TODO gov_cert_hex = "";
+		//TODO for sha1: gov_cert_hex = "";
 		gov_cert_bytes = hexStringToByteArray(gov_cert_hex);
 		
-		temp_int = arraySubstrIndex(gov_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
+		int temp_int = arraySubstrIndex(gov_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
 		gov_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
 		Util.arrayCopy(gov_cert_bytes, (short)temp_int, gov_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
 		gov_exp_pub_bytes = hexStringToByteArray("010001");
-
 
 		// make keys
 		gov_pk.setExponent(gov_exp_pub_bytes, (short)0, (short)gov_exp_pub_bytes.length);
 		gov_pk.setModulus(gov_modulus_bytes, (short)0, (short)gov_modulus_bytes.length);
 		
-
 		/*
 		 * This method registers the applet with the JCRE on the card.
 		 */
@@ -275,7 +265,7 @@ public class IdentityCard extends Applet {
 			
 		// step 2
 		case NEW_SERVICE_CERT:
-			setServiceCertificate(apdu);
+			newServiceCertificate(apdu);
 			break;
 		case SERVICE_CERT_DONE:
 			treatServiceCertificate(apdu);
@@ -289,20 +279,20 @@ public class IdentityCard extends Applet {
 
 		// step 3
 		case SERVICE_CHALLENGE:
-			sendServerChallengeResponse(apdu);
+			sendServiceChallengeResponse(apdu);
 			break;
 		
 		// step 4
 		case NEW_QUERY:
-			setLastQuery(apdu);
+			newQuery(apdu);
 			break;
 		case QUERY_DONE:
-			processLastQuery(apdu);
+			treatQuery(apdu);
 			break;
 		//case VALIDATE_PIN_INS - already defined
 		case GET_QUERY:
 			if (isServiceAuthenticated != false && isPinValidated != false){
-				sendQueryResult(apdu);
+				getQuery(apdu);
 			} else {
 				ISOException.throwIt(SW_ABORT);
 			}
@@ -407,13 +397,13 @@ public class IdentityCard extends Applet {
 		byte[] tempArray = new byte[(short) length];
 		Util.arrayCopy(buffer, (short) offset, tempArray, (short) 0, (short) length);
 
-		long buffer_time = byteArrayToLong(tempArray);
-		long last_time = byteArrayToLong(lastValidationTime);
+		long bufferTime = byteArrayToLong(tempArray);
+		long lastTime = byteArrayToLong(lastValidationTime);
 
-		System.out.println(buffer_time);
-		System.out.println(last_time);
+		System.out.println(bufferTime);
+		System.out.println(lastTime);
 
-		return ((buffer_time - last_time) < VALIDATION_TIME);
+		return ((bufferTime - lastTime) < VALIDATION_TIME);
 	}
 
 	private long byteArrayToLong(byte[] byteArray) {
@@ -426,21 +416,21 @@ public class IdentityCard extends Applet {
 		byte[] buffer = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
 
-		byte[] new_time = new byte[buffer[ISO7816.OFFSET_CDATA]
+		byte[] newTime = new byte[buffer[ISO7816.OFFSET_CDATA]
 				+ buffer[ISO7816.OFFSET_CDATA + buffer[ISO7816.OFFSET_CDATA] + 1]];
-		byte[] new_timestamp = new byte[buffer[ISO7816.OFFSET_CDATA]];
-		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + 1), new_time, (short) 0, (short) new_timestamp.length);
-		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + 1), new_timestamp, (short) 0,
-				(short) new_timestamp.length);
-		byte[] new_timestring = new byte[buffer[ISO7816.OFFSET_CDATA + new_timestamp.length + 1]];
+		byte[] newTimestamp = new byte[buffer[ISO7816.OFFSET_CDATA]];
+		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + 1), newTime, (short) 0, (short) newTimestamp.length);
+		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + 1), newTimestamp, (short) 0,
+				(short) newTimestamp.length);
+		byte[] newTimestring = new byte[buffer[ISO7816.OFFSET_CDATA + newTimestamp.length + 1]];
 
-		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + new_timestamp.length + 2), new_time,
-				(short) new_timestamp.length, (short) new_timestring.length);
-		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + new_timestamp.length + 2), new_timestring, (short) 0,
-				(short) new_timestring.length);
-		byte[] new_timesig = new byte[buffer[ISO7816.OFFSET_CDATA + new_time.length + 2]];
+		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + newTimestamp.length + 2), newTime,
+				(short) newTimestamp.length, (short) newTimestring.length);
+		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + newTimestamp.length + 2), newTimestring, (short) 0,
+				(short) newTimestring.length);
+		byte[] new_timesig = new byte[buffer[ISO7816.OFFSET_CDATA + newTime.length + 2]];
 
-		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + new_time.length + 2 + 1), new_timesig, (short) 0,
+		Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + newTime.length + 2 + 1), new_timesig, (short) 0,
 				(short) new_timesig.length);
 
 		// (10) Verify signature with PK of Government
@@ -462,14 +452,14 @@ public class IdentityCard extends Applet {
 //		if (verify != false) {
 			System.out.println("Time signature verified");
 			// (11) Abort if current time on card is later than the time from the Government Timeserver
-			if (byteArrayToLong(lastValidationTime) < byteArrayToLong(new_timestamp)) {
+			if (byteArrayToLong(lastValidationTime) < byteArrayToLong(newTimestamp)) {
 
 				// (12) Update the time.
-				lastValidationTime = new byte[new_timestamp.length];
-				Util.arrayCopy(new_timestamp, (short) 0, lastValidationTime, (short) 0, (short) new_timestamp.length);
-				lastValidationTimeString = new byte[new_timestring.length];
-				Util.arrayCopy(new_timestring, (short) 0, lastValidationTimeString, (short) 0,
-						(short) new_timestring.length);
+				lastValidationTime = new byte[newTimestamp.length];
+				Util.arrayCopy(newTimestamp, (short) 0, lastValidationTime, (short) 0, (short) newTimestamp.length);
+				lastValidationTimeString = new byte[newTimestring.length];
+				Util.arrayCopy(newTimestring, (short) 0, lastValidationTimeString, (short) 0,
+						(short) newTimestring.length);
 
 //			} else
 //				ISOException.throwIt(SW_ABORT);
@@ -479,65 +469,65 @@ public class IdentityCard extends Applet {
 
 	// STEP 2 --------------------------------------------------------------------------------
 	// step 2 (1)
-	private void setServiceCertificate(APDU apdu) {
+	private void newServiceCertificate(APDU apdu) {
 		byte[] buffer = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
-		int buffer_length;
+		int bufferLength;
 		if (buffer[ISO7816.OFFSET_LC] <0){
-			buffer_length = buffer[ISO7816.OFFSET_LC] * -1;
+			bufferLength = buffer[ISO7816.OFFSET_LC] * -1;
 		} else {
-			buffer_length = buffer[ISO7816.OFFSET_LC];
+			bufferLength = buffer[ISO7816.OFFSET_LC];
 		}
-		byte[] temp = new byte[last_cert.length];
-		Util.arrayCopy(last_cert, (short)0, temp, (short)0, (short)temp.length);
-		last_cert = new byte[temp.length + buffer_length];
-		Util.arrayCopy(temp, (short)0, last_cert, (short)0, (short)temp.length);
-		Util.arrayCopy(buffer, (short)5, last_cert, (short)temp.length, (short)buffer_length);
-		System.out.println(byteArrayToHexString(last_cert));
+		byte[] temp = new byte[lastCert.length];
+		Util.arrayCopy(lastCert, (short)0, temp, (short)0, (short)temp.length);
+		lastCert = new byte[temp.length + bufferLength];
+		Util.arrayCopy(temp, (short)0, lastCert, (short)0, (short)temp.length);
+		Util.arrayCopy(buffer, (short)5, lastCert, (short)temp.length, (short)bufferLength);
+		System.out.println(byteArrayToHexString(lastCert));
 	}
 	private void treatServiceCertificate(APDU apdu) {
 		//get issuer cn
-		int issuer_cn_offset = arraySubstrIndex(last_cert, CN_BYTES) + CN_BYTES.length;
-		last_cert_issuer_cn = new byte[last_cert[issuer_cn_offset]];
-		Util.arrayCopy(last_cert, (short)(issuer_cn_offset+1), last_cert_issuer_cn, (short)0, (short)last_cert_issuer_cn.length);
+		int issuerOffset = arraySubstrIndex(lastCert, CN_BYTES) + CN_BYTES.length;
+		lastCertIssuer = new byte[lastCert[issuerOffset]];
+		Util.arrayCopy(lastCert, (short)(issuerOffset+1), lastCertIssuer, (short)0, (short)lastCertIssuer.length);
 		//get issuer domain
-		int issuer_domain_offset = arraySubstrIndexFrom(last_cert, DOMAIN_BYTES, issuer_cn_offset) + DOMAIN_BYTES.length;
-		last_cert_issuer_domain = new byte[last_cert[issuer_domain_offset]];
-		Util.arrayCopy(last_cert, (short)(issuer_domain_offset+1), last_cert_issuer_domain, (short)0, (short)last_cert_issuer_domain.length);
+		int issuerDomainOffset = arraySubstrIndexFrom(lastCert, DOMAIN_BYTES, issuerOffset) + DOMAIN_BYTES.length;
+		last_cert_issuer_domain = new byte[lastCert[issuerDomainOffset]];
+		Util.arrayCopy(lastCert, (short)(issuerDomainOffset+1), last_cert_issuer_domain, (short)0, (short)last_cert_issuer_domain.length);
 		//get valid after
-		int valid_after_offset = arraySubstrIndexFrom(last_cert, VALIDITY_BYTES, issuer_domain_offset) + VALIDITY_BYTES.length;
+		int validAfterOffset = arraySubstrIndexFrom(lastCert, VALIDITY_BYTES, issuerDomainOffset) + VALIDITY_BYTES.length;
 		last_cert_valid_after = new byte[12];
-		Util.arrayCopy(last_cert, (short)valid_after_offset, last_cert_valid_after, (short)0, (short)last_cert_valid_after.length);
+		Util.arrayCopy(lastCert, (short)validAfterOffset, last_cert_valid_after, (short)0, (short)last_cert_valid_after.length);
 		//get valid before
-		int valid_before_offset = arraySubstrIndexFrom(last_cert, VALIDITY_BYTES, valid_after_offset) + VALIDITY_BYTES.length;
+		int validBeforeOffset = arraySubstrIndexFrom(lastCert, VALIDITY_BYTES, validAfterOffset) + VALIDITY_BYTES.length;
 		last_cert_valid_before = new byte[12];
-		Util.arrayCopy(last_cert, (short)valid_before_offset, last_cert_valid_before, (short)0, (short)last_cert_valid_before.length);
+		Util.arrayCopy(lastCert, (short)validBeforeOffset, last_cert_valid_before, (short)0, (short)last_cert_valid_before.length);
 		//get subject cn
-		int subject_cn_offset = arraySubstrIndexFrom(last_cert, CN_BYTES, valid_before_offset) + CN_BYTES.length;
-		last_cert_subject_cn = new byte[last_cert[subject_cn_offset]];
-		Util.arrayCopy(last_cert, (short)(subject_cn_offset+1), last_cert_subject_cn, (short)0, (short)last_cert_subject_cn.length);
+		int subjectOffset = arraySubstrIndexFrom(lastCert, CN_BYTES, validBeforeOffset) + CN_BYTES.length;
+		last_cert_subject_cn = new byte[lastCert[subjectOffset]];
+		Util.arrayCopy(lastCert, (short)(subjectOffset+1), last_cert_subject_cn, (short)0, (short)last_cert_subject_cn.length);
 		//get subject domain
-		int subject_domain_offset = arraySubstrIndexFrom(last_cert, DOMAIN_BYTES, subject_cn_offset) + DOMAIN_BYTES.length;
-		last_cert_subject_domain = new byte[last_cert[subject_domain_offset]];
-		Util.arrayCopy(last_cert, (short)(subject_domain_offset+1), last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length);
+		int subjectDomainOffset = arraySubstrIndexFrom(lastCert, DOMAIN_BYTES, subjectOffset) + DOMAIN_BYTES.length;
+		last_cert_subject_domain = new byte[lastCert[subjectDomainOffset]];
+		Util.arrayCopy(lastCert, (short)(subjectDomainOffset+1), last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length);
 		//get pk modulus
-		int modulus_offset = arraySubstrIndexFrom(last_cert, MODULUS_BYTES, subject_domain_offset) + MODULUS_BYTES.length;
+		int modulus_offset = arraySubstrIndexFrom(lastCert, MODULUS_BYTES, subjectDomainOffset) + MODULUS_BYTES.length;
 		last_cert_modulus = new byte[LENGTH_RSA_512_BYTES];
-		Util.arrayCopy(last_cert, (short)(modulus_offset), last_cert_modulus, (short)0, (short)last_cert_modulus.length);
+		Util.arrayCopy(lastCert, (short)(modulus_offset), last_cert_modulus, (short)0, (short)last_cert_modulus.length);
 		//get pk exponent
-		int exponent_offset = modulus_offset + last_cert_modulus.length + 1;
-		last_cert_exponent = new byte[last_cert[exponent_offset]];
-		Util.arrayCopy(last_cert, (short)(exponent_offset+1), last_cert_exponent, (short)0, (short)last_cert_exponent.length);
+		int exponentOffset = modulus_offset + last_cert_modulus.length + 1;
+		last_cert_exponent = new byte[lastCert[exponentOffset]];
+		Util.arrayCopy(lastCert, (short)(exponentOffset+1), last_cert_exponent, (short)0, (short)last_cert_exponent.length);
 		//get signature
-		int signature_offset = arraySubstrIndexFrom(last_cert, SIGNATURE_BYTES, exponent_offset) + SIGNATURE_BYTES.length;
+		int signatureOffset = arraySubstrIndexFrom(lastCert, SIGNATURE_BYTES, exponentOffset) + SIGNATURE_BYTES.length;
 		last_cert_signature = new byte[LENGTH_RSA_512_BYTES];
-		last_cert_tbs = new byte[signature_offset - SIGNATURE_BYTES.length - 4];
-		Util.arrayCopy(last_cert, (short)(signature_offset), last_cert_signature, (short)0, (short)last_cert_signature.length);
-		Util.arrayCopy(last_cert, (short)4, last_cert_tbs, (short)0, (short)last_cert_tbs.length);
+		last_cert_tbs = new byte[signatureOffset - SIGNATURE_BYTES.length - 4];
+		Util.arrayCopy(lastCert, (short)(signatureOffset), last_cert_signature, (short)0, (short)last_cert_signature.length);
+		Util.arrayCopy(lastCert, (short)4, last_cert_tbs, (short)0, (short)last_cert_tbs.length);
 		
 		//verify
 		System.out.println("verify last cert");
-		System.out.println(byteArrayToHexString(last_cert_issuer_cn));
+		System.out.println(byteArrayToHexString(lastCertIssuer));
 		System.out.println(byteArrayToHexString(last_cert_issuer_domain));
 		System.out.println(byteArrayToHexString(last_cert_subject_cn));
 		System.out.println(byteArrayToHexString(last_cert_subject_domain));
@@ -573,36 +563,38 @@ public class IdentityCard extends Applet {
 		cipher.doFinal(last_symm_key_bytes, (short)0, (short)last_symm_key_bytes.length, last_symm_key_encrypted, (short)0);
 		
 		//generate challenge
-		genChallenge(); 
+		genChallenge();
+		
 		//encrypt challenge with generated symmetric key
 		cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
 		cipher.init(last_symm_key, Cipher.MODE_ENCRYPT);
-		temp_int = last_challenge.length + last_cert_subject_cn.length + 2;
-		temp_int += LENGTH_AES_128_BYTES - (temp_int%16);
-		last_challenge_with_subject = new byte[temp_int];
+		int i = last_challenge.length + last_cert_subject_cn.length + 2;
+		i += LENGTH_AES_128_BYTES - (i%16);
+		last_challenge_with_subject = new byte[i];
 		last_challenge_with_subject[0] = (byte)last_challenge.length;
 		Util.arrayCopy(last_challenge, (short)0, last_challenge_with_subject, (short)1, (short)last_challenge.length);
 		last_challenge_with_subject[last_challenge.length+1] = (byte)last_cert_subject_cn.length;
 		Util.arrayCopy(last_cert_subject_cn, (short)0, last_challenge_with_subject, (short)(last_challenge.length+2), (short)last_cert_subject_cn.length);
-		last_challenge_with_subject_encrypted = new byte[temp_int];
+		last_challenge_with_subject_encrypted = new byte[i];
 		cipher.doFinal(last_challenge_with_subject, (short)0, (short)last_challenge_with_subject.length, last_challenge_with_subject_encrypted, (short)0);
 		
 		System.out.println("sending this challenge: " + byteArrayToHexString(last_challenge));
 		System.out.println("sending this subject: " + byteArrayToHexString(last_challenge_with_subject));
 		System.out.println("sending this symm key: " + byteArrayToHexString(last_symm_key_bytes));
+		
 		//generate the response array with the symmetric key and the challenge
 		// length + symm key + length + challenge with subject
-		sp_auth_response = new byte[1 + last_symm_key_encrypted.length + 1 + last_challenge_with_subject_encrypted.length];
-		sp_auth_response[0] = (byte)last_symm_key_encrypted.length;
-		Util.arrayCopy(last_symm_key_encrypted, (short)0, sp_auth_response, (short)1, (short)last_symm_key_encrypted.length);
-		sp_auth_response[last_symm_key_encrypted.length+1] = (byte)last_challenge_with_subject_encrypted.length;
-		Util.arrayCopy(last_challenge_with_subject_encrypted, (short)0, sp_auth_response, (short)(last_symm_key_encrypted.length+2), (short)last_challenge_with_subject_encrypted.length);
+		serviceAuthResponse = new byte[1 + last_symm_key_encrypted.length + 1 + last_challenge_with_subject_encrypted.length];
+		serviceAuthResponse[0] = (byte)last_symm_key_encrypted.length;
+		Util.arrayCopy(last_symm_key_encrypted, (short)0, serviceAuthResponse, (short)1, (short)last_symm_key_encrypted.length);
+		serviceAuthResponse[last_symm_key_encrypted.length+1] = (byte)last_challenge_with_subject_encrypted.length;
+		Util.arrayCopy(last_challenge_with_subject_encrypted, (short)0, serviceAuthResponse, (short)(last_symm_key_encrypted.length+2), (short)last_challenge_with_subject_encrypted.length);
 		
 		//send response back to M
 		apdu.setOutgoing();
-		apdu.setOutgoingLength((short)sp_auth_response.length);
-		System.out.println("sending response with length " + sp_auth_response.length);
-		apdu.sendBytesLong(sp_auth_response,(short)0,(short)sp_auth_response.length);
+		apdu.setOutgoingLength((short)serviceAuthResponse.length);
+		System.out.println("sending response with length " + serviceAuthResponse.length);
+		apdu.sendBytesLong(serviceAuthResponse,(short)0,(short)serviceAuthResponse.length);
 		
 	}
 	private boolean verifySig(byte[] message, byte[] signature, RSAPublicKey pk) {
@@ -626,7 +618,7 @@ public class IdentityCard extends Applet {
 	}
 	private void genSymmKey() {
 		last_symm_key_bytes = new byte[LENGTH_AES_128_BYTES];
-		srng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM); //ALG_SECURE_RANDOM NOT WORKING...
+		srng = RandomData.getInstance(RandomData.ALG_PSEUDO_RANDOM); //TODO: ALG_SECURE_RANDOM NOT WORKING...
 		srng.generateData(last_symm_key_bytes, (short)0, (short)last_symm_key_bytes.length);
 	}
 	private void genChallenge() {
@@ -640,15 +632,15 @@ public class IdentityCard extends Applet {
 		apdu.setIncomingAndReceive();
 		System.out.println("using key to decrypt: " + byteArrayToHexString(last_symm_key_bytes));
 		
-		byte[] message_chunk = new byte[buffer[ISO7816.OFFSET_LC]];
-		Util.arrayCopy(buffer, (short)ISO7816.OFFSET_CDATA, message_chunk, (short)0, (short)message_chunk.length);
-		System.out.println("incoming buffer: " + byteArrayToHexString(message_chunk));
-		System.out.println("incoming buffer length: " + message_chunk.length);
+		byte[] messageChunk = new byte[buffer[ISO7816.OFFSET_LC]];
+		Util.arrayCopy(buffer, (short)ISO7816.OFFSET_CDATA, messageChunk, (short)0, (short)messageChunk.length);
+		System.out.println("incoming buffer: " + byteArrayToHexString(messageChunk));
+		System.out.println("incoming buffer length: " + messageChunk.length);
 		
 		last_challenge_response_aes = new byte[LENGTH_AES_128_BYTES];
 		cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
 		cipher.init(last_symm_key, Cipher.MODE_DECRYPT);
-		cipher.doFinal(message_chunk, (short)0, (short)message_chunk.length, last_challenge_response_aes, (short)0);
+		cipher.doFinal(messageChunk, (short)0, (short)messageChunk.length, last_challenge_response_aes, (short)0);
 		last_challenge_response = new byte[last_challenge_response_aes[0]];
 		System.out.println(byteArrayToHexString(last_challenge_response_aes));
 		System.out.println(last_challenge_response.length);
@@ -666,9 +658,9 @@ public class IdentityCard extends Applet {
 			Util.arrayCopy(last_challenge_response_aes, (short)(1 + last_challenge_response.length + 1), last_server_challenge, (short)0, (short)last_server_challenge.length);
 			
 			//sign challenge with common SK
-			temp_int = 1 + LENGTH_RSA_512_BYTES + 1 + common_cert_bytes.length;
-			temp_int += LENGTH_AES_128_BYTES - (temp_int%16);
-			last_server_challenge_resp = new byte[temp_int];
+			int i = 1 + LENGTH_RSA_512_BYTES + 1 + common_cert_bytes.length;
+			i += LENGTH_AES_128_BYTES - (i%16);
+			last_server_challenge_resp = new byte[i];
 			last_server_challenge_resp[0] = (byte) LENGTH_RSA_512_BYTES;
 			sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 			sig.init(common_sk, Signature.MODE_SIGN);
@@ -680,7 +672,7 @@ public class IdentityCard extends Applet {
 			//encrypt with symmetric key
 			cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
 			cipher.init(last_symm_key, Cipher.MODE_ENCRYPT);
-			last_server_challenge_resp_encrypted = new byte[temp_int];
+			last_server_challenge_resp_encrypted = new byte[i];
 			cipher.doFinal(last_server_challenge_resp, (short)0, (short)last_server_challenge_resp.length, last_server_challenge_resp_encrypted, (short)0);
 			
 			System.out.println("response to server: " + byteArrayToHexString(last_server_challenge_resp));
@@ -695,23 +687,23 @@ public class IdentityCard extends Applet {
 	
 
 	// STEP 3 ----
-	private void sendServerChallengeResponse(APDU apdu){
+	private void sendServiceChallengeResponse(APDU apdu){
 		byte[] buffer = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
 		short i = (short)buffer[ISO7816.OFFSET_CDATA];
 		if (i<=last_server_challenge_resp_encrypted.length/APDU_MAX_BUFF_SIZE){
-			int my_message_part_length = APDU_MAX_BUFF_SIZE;
+			int msgChunkLength = APDU_MAX_BUFF_SIZE;
 			if (last_server_challenge_resp_encrypted.length-(i*APDU_MAX_BUFF_SIZE) < APDU_MAX_BUFF_SIZE){
-				my_message_part_length = last_server_challenge_resp_encrypted.length-(i*APDU_MAX_BUFF_SIZE);
+				msgChunkLength = last_server_challenge_resp_encrypted.length-(i*APDU_MAX_BUFF_SIZE);
 			}
-			if (my_message_part_length > 0){
-				byte[] my_message_part = new byte[my_message_part_length];
-				System.arraycopy(last_server_challenge_resp_encrypted, APDU_MAX_BUFF_SIZE*i, my_message_part, 0, my_message_part_length);
-				System.out.println(byteArrayToHexString(my_message_part));
+			if (msgChunkLength > 0){
+				byte[] msgChunk = new byte[msgChunkLength];
+				System.arraycopy(last_server_challenge_resp_encrypted, APDU_MAX_BUFF_SIZE*i, msgChunk, 0, msgChunkLength);
+				System.out.println(byteArrayToHexString(msgChunk));
 				apdu.setOutgoing();
-				apdu.setOutgoingLength((short)my_message_part_length);
-				System.out.println("sending response with length " + my_message_part_length);
-				apdu.sendBytesLong(my_message_part,(short)0,(short)my_message_part_length);
+				apdu.setOutgoingLength((short)msgChunkLength);
+				System.out.println("sending response with length " + msgChunkLength);
+				apdu.sendBytesLong(msgChunk,(short)0,(short)msgChunkLength);
 			}
 		} else {
 			apdu.setOutgoing();
@@ -722,73 +714,73 @@ public class IdentityCard extends Applet {
 	
 
 	// STEP 4 ----
-	private void setLastQuery(APDU apdu) {
+	private void newQuery(APDU apdu) {
 		byte[] buffer = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
-		int buffer_length;
+		int bufferLength;
 		if (buffer[ISO7816.OFFSET_LC] <0){
-			buffer_length = buffer[ISO7816.OFFSET_LC] * -1;
+			bufferLength = buffer[ISO7816.OFFSET_LC] * -1;
 		} else {
-			buffer_length = buffer[ISO7816.OFFSET_LC];
+			bufferLength = buffer[ISO7816.OFFSET_LC];
 		}
 		byte[] temp = new byte[last_query.length];
 		Util.arrayCopy(last_query, (short)0, temp, (short)0, (short)temp.length);
-		last_query = new byte[temp.length + buffer_length];
+		last_query = new byte[temp.length + bufferLength];
 		Util.arrayCopy(temp, (short)0, last_query, (short)0, (short)temp.length);
-		Util.arrayCopy(buffer, (short)5, last_query, (short)temp.length, (short)buffer_length);
+		Util.arrayCopy(buffer, (short)5, last_query, (short)temp.length, (short)bufferLength);
 		System.out.println(byteArrayToHexString(last_query));
 	}
-	private void processLastQuery(APDU apdu) {
+	private void treatQuery(APDU apdu) {
 		// TODO Auto-generated method stub
-		temp_int = 0;
-		query_result = new byte[(short)0];
-		while (temp_int < last_query.length){
-			query_item = new byte[(short)last_query[temp_int]];
-			Util.arrayCopy(last_query, (short)(temp_int+1), query_item, (short)0, (short)query_item.length);
+		int i = 0;
+		queryResult = new byte[(short)0];
+		while (i < last_query.length){
+			queryItem = new byte[(short)last_query[i]];
+			Util.arrayCopy(last_query, (short)(i+1), queryItem, (short)0, (short)queryItem.length);
 			
-			if ("nym".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "nym".getBytes(), (short)0, (short)query_item.length) == 0){
+			if ("nym".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "nym".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested nym");
 				if (checkAuthorized(NYM_IDX, "nym".getBytes(), genNym()) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("name".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "name".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("name".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "name".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested name");
 				if (checkAuthorized(NAME_IDX, "name".getBytes(), NAME) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("address".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "address".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("address".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "address".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested address");
 				if (checkAuthorized(ADDRESS_IDX, "address".getBytes(), ADDRESS) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("country".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "country".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("country".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "country".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested country");
 				if (checkAuthorized(COUNTRY_IDX, "country".getBytes(), COUNTRY) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("birthdate".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "birthdate".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("birthdate".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "birthdate".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested birthdate");
 				if (checkAuthorized(BIRTHDATE_IDX, "birthdate".getBytes(), BIRTHDATE) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("age".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "age".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("age".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "age".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested age");
 				if (checkAuthorized(AGE_IDX, "age".getBytes(), AGE) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("gender".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "gender".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("gender".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "gender".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested gender");
 				if (checkAuthorized(GENDER_IDX, "gender".getBytes(), GENDER) == false){
 					ISOException.throwIt(SW_ABORT);
 					break;
 				}
-			} else if ("picture".getBytes().length == query_item.length && (short)Util.arrayCompare(query_item, (short)0, "picture".getBytes(), (short)0, (short)query_item.length) == 0){
+			} else if ("picture".getBytes().length == queryItem.length && (short)Util.arrayCompare(queryItem, (short)0, "picture".getBytes(), (short)0, (short)queryItem.length) == 0){
 				System.out.println("requested picture");
 				if (checkAuthorized(PICTURE_IDX, "picture".getBytes(), PICTURE) == false){
 					ISOException.throwIt(SW_ABORT);
@@ -797,88 +789,88 @@ public class IdentityCard extends Applet {
 			}
 			
 			
-			temp_int++;
-			temp_int += query_item.length;
+			i++;
+			i += queryItem.length;
 		}
 		System.out.println("loop done");
 		
 		//encrypt the query result
-		temp_int = query_result.length;
-		temp_int += LENGTH_AES_128_BYTES - (temp_int%16);
-		byte[] query_result_aes = new byte[temp_int];
-		Util.arrayCopy(query_result, (short)0, query_result_aes, (short)(0), (short)query_result.length);
+		i = queryResult.length;
+		i += LENGTH_AES_128_BYTES - (i%16);
+		byte[] queryResultAES = new byte[i];
+		Util.arrayCopy(queryResult, (short)0, queryResultAES, (short)(0), (short)queryResult.length);
 		cipher = Cipher.getInstance(Cipher.ALG_AES_BLOCK_128_CBC_NOPAD, false);
 		cipher.init(last_symm_key, Cipher.MODE_ENCRYPT);
-		query_result_encrypted = new byte[temp_int];
-		cipher.doFinal(query_result_aes, (short)0, (short)query_result_aes.length, query_result_encrypted, (short)0);
+		query_result_encrypted = new byte[i];
+		cipher.doFinal(queryResultAES, (short)0, (short)queryResultAES.length, query_result_encrypted, (short)0);
 		
 	}
 	private boolean checkAuthorized(byte idx, byte[] param, byte[] val) {
-		check_auth_content = false;
+		hasCheckAuthContent = false;
 		if (DOMAIN_DEFAULT_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_DEFAULT_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
 			System.out.println("default domain");
 			if ((short)DOMAIN_DEFAULT_AUTH[(short)idx] == (short)1){
-				check_auth_content = true;
+				hasCheckAuthContent = true;
 			}
 		} else if (DOMAIN_EGOV_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_EGOV_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
 			System.out.println("egov domain");
 			if ((short)DOMAIN_EGOV_AUTH[(short)idx] == (short)1){
-				check_auth_content = true;
+				hasCheckAuthContent = true;
 			}
 		} else if (DOMAIN_SOCNET_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_SOCNET_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
 			System.out.println("socnet domain");
 			if ((short)DOMAIN_SOCNET_AUTH[(short)idx] == (short)1){
-				check_auth_content = true;
+				hasCheckAuthContent = true;
 			}
 		} else if (DOMAIN_SUPERMARKET_BYTES.length == last_cert_subject_domain.length && (short)Util.arrayCompare(DOMAIN_SUPERMARKET_BYTES, (short)0, last_cert_subject_domain, (short)0, (short)last_cert_subject_domain.length) == 0){
 			System.out.println("super market domain");
 			if ((short)DOMAIN_SUPERMARKET_AUTH[(short)idx] == (short)1){
-				check_auth_content = true;
+				hasCheckAuthContent = true;
 			}
 		}
 		
-		if (check_auth_content != false){
-			byte[] temp_array = new byte[(short)query_result.length];
-			if(temp_array.length > 0){
-				Util.arrayCopy(query_result, (short)0, temp_array, (short)0, (short)temp_array.length);
+		if (hasCheckAuthContent != false){
+			byte[] temp = new byte[(short)queryResult.length];
+			if(temp.length > 0){
+				Util.arrayCopy(queryResult, (short)0, temp, (short)0, (short)temp.length);
 			}
-			query_result = new byte[(short)(temp_array.length + 2 + param.length + val.length)];
-			if(temp_array.length > 0){
-				Util.arrayCopy(temp_array, (short)0, query_result, (short)0, (short)temp_array.length);
+			queryResult = new byte[(short)(temp.length + 2 + param.length + val.length)];
+			if(temp.length > 0){
+				Util.arrayCopy(temp, (short)0, queryResult, (short)0, (short)temp.length);
 			}
-			query_result[temp_array.length] = (byte)param.length;
-			Util.arrayCopy(param, (short)0, query_result, (short)(temp_array.length+1), (short)param.length);
-			query_result[temp_array.length+1+param.length] = (byte)val.length;
-			Util.arrayCopy(val, (short)0, query_result, (short)(temp_array.length+1+param.length+1), (short)val.length);
+			queryResult[temp.length] = (byte)param.length;
+			Util.arrayCopy(param, (short)0, queryResult, (short)(temp.length+1), (short)param.length);
+			queryResult[temp.length+1+param.length] = (byte)val.length;
+			Util.arrayCopy(val, (short)0, queryResult, (short)(temp.length+1+param.length+1), (short)val.length);
 		}
-		return check_auth_content;
+		return hasCheckAuthContent;
 	}
 	private byte[] genNym() {
 		md = MessageDigest.getInstance(MessageDigest.ALG_SHA, false);
 		NYM = new byte[MessageDigest.LENGTH_SHA];
-		byte[] temp_array = new byte[last_cert_subject_cn.length + serial.length];
-		Util.arrayCopy(serial, (short)0, temp_array, (short)(0), (short)serial.length);
-		Util.arrayCopy(last_cert_subject_cn, (short)0, temp_array, (short)(serial.length), (short)last_cert_subject_cn.length);
-		md.doFinal(temp_array, (short)0, (short)temp_array.length, NYM, (short)0);
+		byte[] temp = new byte[last_cert_subject_cn.length + serial.length];
+		Util.arrayCopy(serial, (short)0, temp, (short)(0), (short)serial.length);
+		Util.arrayCopy(last_cert_subject_cn, (short)0, temp, (short)(serial.length), (short)last_cert_subject_cn.length);
+		md.doFinal(temp, (short)0, (short)temp.length, NYM, (short)0);
 		return NYM;
 	}
-	private void sendQueryResult(APDU apdu) {
+	private void getQuery(APDU apdu) {
 		byte[] buffer = apdu.getBuffer();
 		apdu.setIncomingAndReceive();
 		short i = (short)buffer[ISO7816.OFFSET_CDATA];
 		if (i<=query_result_encrypted.length/APDU_MAX_BUFF_SIZE){
-			int my_message_part_length = APDU_MAX_BUFF_SIZE;
+			int msgChunkLength = APDU_MAX_BUFF_SIZE;
 			if (query_result_encrypted.length-(i*APDU_MAX_BUFF_SIZE) < APDU_MAX_BUFF_SIZE){
-				my_message_part_length = query_result_encrypted.length-(i*APDU_MAX_BUFF_SIZE);
+				msgChunkLength = query_result_encrypted.length-(i*APDU_MAX_BUFF_SIZE);
 			}
-			if (my_message_part_length > 0){
-				byte[] my_message_part = new byte[my_message_part_length];
-				System.arraycopy(query_result_encrypted, APDU_MAX_BUFF_SIZE*i, my_message_part, 0, my_message_part_length);
-				System.out.println(byteArrayToHexString(my_message_part));
+			if (msgChunkLength > 0){
+				byte[] msgChunk = new byte[msgChunkLength];
+				System.arraycopy(query_result_encrypted, APDU_MAX_BUFF_SIZE*i, msgChunk, 0, msgChunkLength);
+				System.out.println(byteArrayToHexString(msgChunk));
 				apdu.setOutgoing();
-				apdu.setOutgoingLength((short)my_message_part_length);
-				System.out.println("sending response with length " + my_message_part_length);
-				apdu.sendBytesLong(my_message_part,(short)0,(short)my_message_part_length);
+				apdu.setOutgoingLength((short)msgChunkLength);
+				System.out.println("sending response with length " + msgChunkLength);
+				apdu.sendBytesLong(msgChunk,(short)0,(short)msgChunkLength);
 			}
 		} else {
 			apdu.setOutgoing();
@@ -888,9 +880,6 @@ public class IdentityCard extends Applet {
 	}
 
 	
-	
-	
-
 	// ------ help functions
 	// ------------------------------------------------------
 	// byte array from hex string
