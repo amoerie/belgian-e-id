@@ -99,10 +99,10 @@ public class ProviderThread extends Thread {
 				
 				Provider.logging.setText(Provider.logging.getText() + "\nMessage received");
 				
-				if (message.equals(MSG_RESULT)) {
+				//if (message.equals(MSG_RESULT)) {
 					String output = TreatMessage(message);
 					outputWriter.println(output);
-				}
+				//}
 				//if other message like abort, etc...
 			}			
 		} catch(IOException e) {
