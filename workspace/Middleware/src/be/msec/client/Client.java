@@ -14,12 +14,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Date;
 
+import javax.net.ServerSocketFactory;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.smartcardio.CommandAPDU;
@@ -251,9 +254,9 @@ public class Client {
 			
 			//TEST: socket connection without SSL
 			Socket govSocket = new Socket("127.0.0.1", 4444);
+			
 			InputStream inputStream = govSocket.getInputStream();
 			OutputStream outputStream = govSocket.getOutputStream();
-			
 			
 			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
 			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
