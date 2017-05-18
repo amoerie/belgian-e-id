@@ -34,8 +34,8 @@ public class Timestamp {
          
         ServerSocket serverSocket = null;
         try {
-//			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
-			serverSocket = new ServerSocket(4444);
+			serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(4444);
+//			serverSocket = new ServerSocket(4444);
 //        	SSLContext context = SSLContext.getInstance("TLS");
 //            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
 //            KeyStore keyStore = KeyStore.getInstance("JKS");

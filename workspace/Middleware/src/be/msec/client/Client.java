@@ -241,22 +241,22 @@ public class Client {
 		//only for the client side
 		System.setProperty("javax.net.ssl.trustStoreType", "jks");
 		//System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
-		System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
+		System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
 		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 		
 		//SSL socket connection
-//		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
-//		SSLSocket sslsocket;
+		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
+		SSLSocket sslsocket;
 		try {
-//			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
-//			InputStream inputStream = sslsocket.getInputStream();
-//			OutputStream outputStream = sslsocket.getOutputStream();
+			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
+			InputStream inputStream = sslsocket.getInputStream();
+			OutputStream outputStream = sslsocket.getOutputStream();
 			
 			//TEST: socket connection without SSL
-			Socket govSocket = new Socket("127.0.0.1", 4444);
-			
-			InputStream inputStream = govSocket.getInputStream();
-			OutputStream outputStream = govSocket.getOutputStream();
+//			Socket govSocket = new Socket("127.0.0.1", 4444);
+//			
+//			InputStream inputStream = govSocket.getInputStream();
+//			OutputStream outputStream = govSocket.getOutputStream();
 			
 			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
 			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
