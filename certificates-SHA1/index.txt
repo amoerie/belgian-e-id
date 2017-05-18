@@ -1,0 +1,10 @@
+V	200212130004Z		01	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=GOV
+V	200212131314Z		02	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=TAXONWEB/domain=eGov
+V	200212131330Z		03	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=STUDENTPORTAL/domain=eGov
+V	200212131341Z		04	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=FACEBOOK/domain=SocNet
+V	200212131351Z		05	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=GOOGLE/domain=SocNet
+V	200212131405Z		06	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=COLRUYT/domain=SuperMarket
+V	200212131416Z		07	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=DELHAIZE/domain=SuperMarket
+V	200212131429Z		08	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=KINEPOLIS/domain=default
+V	200212131441Z		09	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=PLANCKENDAEL/domain=default
+V	200212131451Z		0A	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=COMMON/domain=common
