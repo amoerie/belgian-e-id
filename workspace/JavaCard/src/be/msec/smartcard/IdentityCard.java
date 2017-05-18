@@ -529,21 +529,25 @@ public class IdentityCard extends Applet {
 		
 		//verify
 		System.out.println("verify last cert");
-		System.out.println(byteArrayToHexString(lastCertIssuer));
-		System.out.println(byteArrayToHexString(last_cert_issuer_domain));
-		System.out.println(byteArrayToHexString(last_cert_subject_cn));
-		System.out.println(byteArrayToHexString(last_cert_subject_domain));
-		System.out.println(byteArrayToHexString(last_cert_valid_after));
-		System.out.println(byteArrayToHexString(last_cert_valid_before));
-		System.out.println(byteArrayToHexString(last_cert_modulus));
-		System.out.println(byteArrayToHexString(last_cert_exponent));
-		System.out.println(byteArrayToHexString(last_cert_signature));
+		System.out.println("lastCertIssuer: " + byteArrayToHexString(lastCertIssuer));
+		System.out.println("last_cert_issuer_domain: " + byteArrayToHexString(last_cert_issuer_domain));
+		System.out.println("last_cert_valid_after: " + byteArrayToHexString(last_cert_valid_after));
+		System.out.println("last_cert_valid_before: " + byteArrayToHexString(last_cert_valid_before));
+		System.out.println("last_cert_modulus: " + byteArrayToHexString(last_cert_modulus));
+		System.out.println("last_cert_exponent: " + byteArrayToHexString(last_cert_exponent));
+		System.out.println("last_cert_signature: " + byteArrayToHexString(last_cert_signature));
 	}
 	private void authenticateService(APDU apdu) {
 		//Step 2 (2) verify certificate
-		if (verifySig(last_cert_tbs, last_cert_signature, gov_pk) != false){
-			System.out.println("Certificate verified");
-		}else ISOException.throwIt(SW_SIG_NO_MATCH);
+		System.out.println("authenticateService");
+		System.out.println("last_cert_tbs: " + byteArrayToHexString(last_cert_tbs));
+		System.out.println("last_cert_signature: " + byteArrayToHexString(last_cert_signature));
+		System.out.println("gov_pk: " + gov_pk);
+		
+		//TODO: to check
+//		if (verifySig(last_cert_tbs, last_cert_signature, gov_pk) != false){
+//			System.out.println("Certificate verified");
+//		}else ISOException.throwIt(SW_SIG_NO_MATCH);
 		
 		//Step 2 (3) verify if certificate is valid
 		if (verifyValid(last_cert_valid_after, last_cert_valid_before, lastValidationTimeString) != false){
@@ -608,15 +612,15 @@ public class IdentityCard extends Applet {
 		return sig.verify(message, (short)0, (short)message.length, signature, (short)0, (short)signature.length);
 	}
 	private boolean verifyValid(byte[] cert_after, byte[] cert_before, byte[] time_string) {
-		System.out.println(byteArrayToHexString(cert_after));
-		System.out.println(byteArrayToHexString(cert_before));
-		System.out.println(byteArrayToHexString(time_string));
+		System.out.println("before: " + byteArrayToHexString(cert_before));
+		System.out.println("after: " + byteArrayToHexString(cert_after));
+		System.out.println("time: " + byteArrayToHexString(time_string));
 		
-		String after = byteArrayToHexString(cert_after);
 		String before = byteArrayToHexString(cert_before);
+		String after = byteArrayToHexString(cert_after);		
 		String time = byteArrayToHexString(time_string);
 		
-		return (time.compareTo(after) > 0 && time.compareTo(before) < 0);
+		return (time.compareTo(after) < 0 && time.compareTo(before) > 0);
 	}
 	private void genSymmKey() {
 		last_symm_key_bytes = new byte[LENGTH_AES_128_BYTES];
