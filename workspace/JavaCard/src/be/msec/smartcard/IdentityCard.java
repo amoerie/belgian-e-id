@@ -55,16 +55,16 @@ public class IdentityCard extends Applet {
 	//private final static byte TIMESTAMP_SIZE = (byte) 0x12;
 
 	//certificates - start \\\\
-	//private String common_key_hex;
-	//private String common_cert_hex;
+	private String common_key_hex;
+	private String common_cert_hex;
 	private String gov_cert_hex;
 	
-	//private byte[] common_key_bytes;
+	private byte[] common_key_bytes;
 	private byte[] common_cert_bytes;
-	//private byte[] common_modulus_bytes;
-	//private byte[] common_exp_priv_bytes;
-	//private byte[] common_exp_pub_bytes;
-	//private byte[] common_sig_bytes;
+	private byte[] common_modulus_bytes;
+	private byte[] common_exp_priv_bytes;
+	private byte[] common_exp_pub_bytes;
+	private byte[] common_sig_bytes;
 	private byte[] gov_cert_bytes;
 	private byte[] gov_modulus_bytes;
 	private byte[] gov_exp_pub_bytes;
@@ -112,9 +112,8 @@ public class IdentityCard extends Applet {
 	static byte[] queryItem = new byte[0];
 	
 	private RSAPrivateKey common_sk = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
-	//private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+	private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
-	//private RSAPublicKey time_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 	
 	private final static int LENGTH_RSA_512_BYTES = KeyBuilder.LENGTH_RSA_512/8;
 	private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128/8;
@@ -131,8 +130,8 @@ public class IdentityCard extends Applet {
 	//keywords - start \\\\
 	private final static String MODULUS_HEX = "024100";
 	private final static byte[] MODULUS_BYTES = hexStringToByteArray(MODULUS_HEX);
-	//private final static String EXPONENT_HEX = "010240";
-	//private final static byte[] EXPONENT_BYTES = hexStringToByteArray(EXPONENT_HEX);
+	private final static String EXPONENT_HEX = "010240";
+	private final static byte[] EXPONENT_BYTES = hexStringToByteArray(EXPONENT_HEX);
 	private final static String SIGNATURE_HEX = "300D06092A864886F70D0101050500034100";
 	private final static byte[] SIGNATURE_BYTES = hexStringToByteArray(SIGNATURE_HEX);
 	//private final static String CERT_HEX = "308201"; // +1byte
@@ -198,10 +197,31 @@ public class IdentityCard extends Applet {
 		gov_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
 		Util.arrayCopy(gov_cert_bytes, (short)temp_int, gov_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
 		gov_exp_pub_bytes = hexStringToByteArray("010001");
+		
+		//common certificates
+		//common private key
+		common_key_hex = "30820156020100300D06092A864886F70D0101010500048201403082013C020100024100E62E8EF30AB20EA76F65072011C69B0C1535C078A57866CF22634AB0EAA2F4D7D7A1A662E4D029686C12C50F8A4BE413F4791BC9F1268A183DE6237FFD020AD102030100010240666BA70DBBDF98A7A5E855304ED8895AEA011DE050F86EFE91B58EA183F5F86D4E1E5EA235CED42E02D5BAF1699E4BA63B1A2391866BDCACA4157D05F00D4FF1022100F87924007013BFCD247CF1276296B78DE173C2D05711F859A790698BFEB944E5022100ED2792789C24D6480559E34282C83440D673CE50E85962C8318476CA89F65B7D022100B3C340CEA847417E7325897ACB12EB5D547CE1B6C527951B97E51CD751C44C19022100C9AF48C2A7D0302809DCFB07DA5F5708F9187D929337496A05AAA8B7F10281A5022100AA1B57991C6AA1FE63FB92A2BAD7F44B9637F4A0AF765C65AEA326C408E2A83A";
+		common_cert_hex = "3082028830820232A00302010202010A300D06092A864886F70D01010505003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303531383133313435315A170D3230303231323133313435315A306A310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310C300A060355040A0C03565542310F300D06035504030C06434F4D4D4F4E31163014060A0992268993F22C64040D0C06636F6D6D6F6E305C300D06092A864886F70D0101010500034B003048024100C3112DBCA42C1E2936CDDDDCE69D69CA14E0D1DF8FDD3477F972AEF1C9F2F4EFD4B6E4F074FF88E797AF134ED55682C414D8BC941E2CEF9A876A64361FE4865D0203010001A381B73081B4301D0603551D0E041604147E14B56E263AD7B7A12823E69AE961A3FD4913F0301F0603551D230418301680140082A0BEDC088FD044D1FE31A0272DC006C49D6B30090603551D1304023000300B0603551D0F0404030205A0302C0603551D110425302382096C6F63616C686F737487047F000001871000000000000000000000000000000001302C06096086480186F842010D041F161D4F70656E53534C2047656E657261746564204365727469666963617465300D06092A864886F70D0101050500034100A28D3F7B004D69453B6E05F675D6D47BC932502B9F621FB04CAC322910D3EC6669E154764894559DACBC3BCE38B0139CF1C583D22AF245741AA854EF39D226E1";
+		common_key_bytes = hexStringToByteArray(common_key_hex);
+		common_cert_bytes = hexStringToByteArray(common_cert_hex);
 
+		temp_int = arraySubstrIndex(common_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
+		common_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
+		Util.arrayCopy(common_cert_bytes, (short)temp_int, common_modulus_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
+		
+		temp_int = arraySubstrIndex(common_key_bytes, EXPONENT_BYTES) + EXPONENT_BYTES.length;
+		common_exp_priv_bytes = new byte[LENGTH_RSA_512_BYTES];
+		Util.arrayCopy(common_key_bytes, (short)temp_int, common_exp_priv_bytes, (short)0, (short)LENGTH_RSA_512_BYTES);
+		common_exp_pub_bytes = hexStringToByteArray("010001");
+		
 		// make keys
 		gov_pk.setExponent(gov_exp_pub_bytes, (short)0, (short)gov_exp_pub_bytes.length);
 		gov_pk.setModulus(gov_modulus_bytes, (short)0, (short)gov_modulus_bytes.length);
+		
+		common_sk.setExponent(common_exp_priv_bytes, (short)0, (short)common_exp_priv_bytes.length);
+		common_sk.setModulus(common_modulus_bytes, (short)0, (short)common_modulus_bytes.length);
+		common_pk.setExponent(common_exp_pub_bytes, (short)0, (short)common_exp_pub_bytes.length);
+		common_pk.setModulus(common_modulus_bytes, (short)0, (short)common_modulus_bytes.length);
 		
 		/*
 		 * This method registers the applet with the JCRE on the card.
