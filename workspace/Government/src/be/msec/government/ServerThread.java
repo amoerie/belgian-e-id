@@ -33,9 +33,9 @@ public class ServerThread extends Thread {
 		
 	//certificate                        
 	//sha256
-	private static String store_location = "src/belgianeid.jks";
+	//private static String store_location = "src/belgianeid.jks";
 	//sha1
-	//private static String store_location = "src/belgianeidsha1.jks";
+	private static String store_location = "src/belgianeidsha1.jks";
 	private static char[] mypass = "123456".toCharArray();
 	private static RSAPrivateCrtKey my_key;
 	private static X509Certificate my_cert;
@@ -127,7 +127,10 @@ public class ServerThread extends Thread {
 		System.arraycopy(timestamp_bytes, (short)0, time_bytes, (short)0, (short)timestamp_bytes.length);
 		System.arraycopy(timestring_bytes, (short)0, time_bytes, (short)timestamp_bytes.length, (short)timestring_bytes.length);
 		
-		Signature signature = Signature.getInstance("SHA256withRSA");
+		//sha256
+		//Signature signature = Signature.getInstance("SHA256withRSA");
+		//sha1
+		Signature signature = Signature.getInstance("SHA1withRSA");
 		signature.initSign(my_key);
 		signature.update(time_bytes);
 		byte[] timesig_bytes = signature.sign();

@@ -63,9 +63,9 @@ public class ProviderThread extends Thread {
 	
 	//certificate                               
 	//sha256
-	private static String store_location = "src/belgianeid.jks";
+	//private static String store_location = "src/belgianeid.jks";
 	//sha1
-	//private static String store_location = "src/belgianeidsha1.jks";
+	private static String store_location = "src/belgianeidsha1.jks";
 	private static char[] mypass = "123456".toCharArray();
 	private static RSAPrivateCrtKey service_key;
 	private static X509Certificate service_cert;

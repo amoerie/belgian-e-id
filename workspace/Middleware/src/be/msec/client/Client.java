@@ -184,7 +184,7 @@ public class Client {
 		}
 	}
 	
-	//step 1 (2)
+	//step 1
 	private void updateTime() throws Exception {
 		communication.append("Connecting to card - inserted in reader\n");
 		
@@ -207,16 +207,16 @@ public class Client {
 				System.out.println(res);
 				if (res.getSW()==SW_ABORT)throw new Exception("Aborted: Cannot update time");
 				else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
-//				
+				
 				communication.append("RevalidationRequest: new timestamp is saved on the card\n");	
 			}
 			
-			//only for testing the code: extra send hello to the card with the same timestamp 
-			a = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00,longToBytes(timestamp));
-			res = con.transmit(a);
-			if (res.getSW()!=SW_REQ_REVALIDATION) {
-				communication.append("NEW RevalidationRequest is false now\n");
-			}
+			//****only for testing the code: extra send hello to the card with the same timestamp 
+			//a = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00,longToBytes(timestamp));
+			//res = con.transmit(a);
+			//if (res.getSW()!=SW_REQ_REVALIDATION) {
+			//	communication.append("NEW RevalidationRequest is false now\n");
+			//}
 			else if(res.getSW()!=0x9000) throw new Exception("Exception on the card: " + res.getSW());
 			
 		} else { //goto step 2 : authenticateServiceProvider
@@ -229,26 +229,30 @@ public class Client {
 	{
 		//socket connection to Government
 		HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
-		System.setProperty("javax.net.debug", "ssl");
-		System.setProperty("javax.net.ssl.keyStoreType", "jks");
-		System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
-		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
-		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		//only for the server side
+		//**System.setProperty("javax.net.debug", "ssl");
+		//**System.setProperty("javax.net.ssl.keyStoreType", "jks");
+		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
+		//**System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
+		//**System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		//only for the client side
 		System.setProperty("javax.net.ssl.trustStoreType", "jks");
-		System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
-		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
+		//System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
 		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 		
-		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
-		SSLSocket sslsocket;
+		//SSL socket connection
+//		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
+//		SSLSocket sslsocket;
 		try {
-			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
-			InputStream inputStream = sslsocket.getInputStream();
-			OutputStream outputStream = sslsocket.getOutputStream();
+//			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
+//			InputStream inputStream = sslsocket.getInputStream();
+//			OutputStream outputStream = sslsocket.getOutputStream();
 			
-//			Socket govSocket = new Socket("127.0.0.1", 4444);
-//			InputStream inputStream = govSocket.getInputStream();
-//			OutputStream outputStream = govSocket.getOutputStream();
+			//TEST: socket connection without SSL
+			Socket govSocket = new Socket("127.0.0.1", 4444);
+			InputStream inputStream = govSocket.getInputStream();
+			OutputStream outputStream = govSocket.getOutputStream();
 			
 			
 			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -261,11 +265,7 @@ public class Client {
 			printWriter.println(MSG_GET_TIME);
 			
 			System.out.print("Message reply from server: ");
-			//String msgFromGServer = null;
-			//while ((msgFromGServer = bufferedReader.readLine()) != null) {
-			//    System.out.println("Received: " + msgFromGServer);
-			//    //return hexStringToByteArray(msgFromGServer);
-			//}
+			
 			String msgFromGServer = bufferedReader.readLine();
 			if (msgFromGServer.equalsIgnoreCase("Abort")){
             	communication.append("Error in timeserver\n");
@@ -277,13 +277,12 @@ public class Client {
 				}
             }else{
             	System.out.println("Received: " + msgFromGServer);
+            	communication.append(msgFromGServer + "\n");
             	return hexStringToByteArray(msgFromGServer);
             }
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
