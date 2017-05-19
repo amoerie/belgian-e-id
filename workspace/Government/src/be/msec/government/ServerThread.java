@@ -47,16 +47,12 @@ public class ServerThread extends Thread {
 		try {
 			getCertificate();
 		} catch (UnrecoverableKeyException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (NoSuchAlgorithmException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (CertificateException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (IOException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
 		
@@ -71,13 +67,10 @@ public class ServerThread extends Thread {
 					try {
 						outputWriter.println(byteArrayToHexString(getRevalidationRequest()));
 					} catch (InvalidKeyException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (SignatureException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					} catch (NoSuchAlgorithmException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -105,7 +98,6 @@ public class ServerThread extends Thread {
 			my_cert = (X509Certificate) store.getCertificate("gov");
 			my_cert_bytes = my_cert.getEncoded();
 		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		

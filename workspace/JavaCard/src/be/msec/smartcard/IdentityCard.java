@@ -466,8 +466,6 @@ public class IdentityCard extends Applet {
 		//Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_256_PKCS1, false); --> not yet in 2.2.2
 		//Signature sig = Signature.getInstance(Signature.ALG_HMAC_SHA_256, false);
 		//sha1
-		
-		//TODO: signing now in comment!
 		Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
 		sig.init(gov_pk, Signature.MODE_VERIFY);
 		System.out.println("verify test");
@@ -760,7 +758,6 @@ public class IdentityCard extends Applet {
 		System.out.println(byteArrayToHexString(last_query));
 	}
 	private void treatQuery(APDU apdu) {
-		// TODO Auto-generated method stub
 		int i = 0;
 		queryResult = new byte[(short)0];
 		while (i < last_query.length){

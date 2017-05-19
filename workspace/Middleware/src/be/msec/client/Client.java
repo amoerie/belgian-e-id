@@ -263,7 +263,6 @@ public class Client {
             	try {
 					throw new Exception("Error in timeserver");
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
             }else{
@@ -313,7 +312,6 @@ public class Client {
         	try {
 				throw new Exception("Error in service provider");
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
         }else{
@@ -402,7 +400,7 @@ public class Client {
         
         String serviceResponse = providerReader.readLine();
         System.out.println("Server: " + serviceResponse);
-        //TODO: error?!
+        //TODO: check if ABORT message!
         //communication.append("Server requests: " + new String(hexStringToByteArray(serviceResponse)) + "\n");
         
         return serviceResponse;

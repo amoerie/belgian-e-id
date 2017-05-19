@@ -137,7 +137,6 @@ public class ProviderThread extends Thread {
 			service_cert_bytes = service_cert.getEncoded();
 			gov_cert = (X509Certificate) store.getCertificate("gov");
 		} catch (KeyStoreException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -152,7 +151,6 @@ public class ProviderThread extends Thread {
 				return TreatSendCertificate(message);
 			} catch (InvalidKeyException | NoSuchAlgorithmException | NoSuchPaddingException | ShortBufferException
 					| IllegalBlockSizeException | BadPaddingException | InvalidAlgorithmParameterException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		case ANSWERED_CHALLENGE:
