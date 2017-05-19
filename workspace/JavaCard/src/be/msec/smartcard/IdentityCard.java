@@ -368,8 +368,11 @@ public class IdentityCard extends Applet {
 			// i+=readCount;
 			// readCount = apdu.receiveBytes(ISO7816.OFFSET_CDATA);
 			// }
-			if (pin.check(buffer, ISO7816.OFFSET_CDATA, PIN_SIZE) == false)
+			if (pin.check(buffer, ISO7816.OFFSET_CDATA,PIN_SIZE)==false){
 				ISOException.throwIt(SW_VERIFICATION_FAILED);
+			} else {
+				isPinValidated = true;
+			}
 		} else
 			ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
 	}

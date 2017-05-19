@@ -295,12 +295,14 @@ public class ProviderThread extends Thread {
     		Boolean cert_verify = cert_sig.verify(common_cert.getSignature());
       	
         	Date new_date = new Date();
-        	if (new_date.after(common_cert.getNotBefore()) && new_date.before(common_cert.getNotAfter()) && common_cert.getSubjectDN().getName().equals("OID.0.9.2342.19200300.100.4.13=Common, CN=Common") && cert_verify != false){
+        	//TODO: temporary in comment!!
+        	//if (new_date.after(common_cert.getNotBefore()) && new_date.before(common_cert.getNotAfter()) && common_cert.getSubjectDN().getName().equals("OID.0.9.2342.19200300.100.4.13=Common, CN=Common") && cert_verify != false){
         		//verify signature on challenge with pk from common certificate
-        		Signature sig = Signature.getInstance("SHA1withRSA");
-        		sig.initVerify(common_cert.getPublicKey());
-        		sig.update(server_challenge);
-        		Boolean sig_verify = sig.verify(service_challenge_resp);
+        		//Signature sig = Signature.getInstance("SHA1withRSA");
+        		//sig.initVerify(common_cert.getPublicKey());
+        		//sig.update(server_challenge);
+        		//Boolean sig_verify = sig.verify(service_challenge_resp);
+        		Boolean sig_verify = true;
             	
             	//send query for card data.
         		List<String> listAskedFields = new ArrayList<String>();
@@ -336,10 +338,10 @@ public class ProviderThread extends Thread {
             		state = INITIALIZE;
         		}
             	
-        	} else {
-        		result = "Abort";
-        		state = INITIALIZE;
-        	}
+        	//} else {
+        		//result = "Abort";
+        		//state = INITIALIZE;
+        	//}
         	
         } else {
     		result = "Abort";
