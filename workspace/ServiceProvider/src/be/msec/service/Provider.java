@@ -10,6 +10,7 @@ import javax.swing.border.EmptyBorder;
 
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -108,10 +109,17 @@ public class Provider extends JFrame {
 		
 		logging.setText(logging.getText() + "\nStarting the Service Provider " + service + ""
 				+ " of Domain " + domain);
-         
+        
+		
+		System.setProperty("javax.net.debug", "ssl");
+		System.setProperty("javax.net.ssl.keyStoreType", "jks");
+		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
+		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
+		
         ServerSocket serverSocket = null;
         try {
-			serverSocket = new ServerSocket(8888);
+        	serverSocket = ((SSLServerSocketFactory)SSLServerSocketFactory.getDefault()).createServerSocket(8888);
 			new ProviderThread(serverSocket, domain, service).start();
 		} catch (IOException e) {
 			e.printStackTrace();

@@ -81,7 +81,8 @@ public class Client {
     JTextArea communication;
     
     //SP connection
-    Socket providerSocket;
+    //Socket providerSocket;
+    SSLSocket providerSocket;
 	BufferedReader providerReader;
 	PrintWriter providerWriter;
 	
@@ -232,13 +233,6 @@ public class Client {
 	{
 		//socket connection to Government
 		HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
-		//only for the server side
-		//**System.setProperty("javax.net.debug", "ssl");
-		//**System.setProperty("javax.net.ssl.keyStoreType", "jks");
-		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
-		//**System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
-		//**System.setProperty("javax.net.ssl.keyStorePassword", "123456");
-		//only for the client side
 		System.setProperty("javax.net.ssl.trustStoreType", "jks");
 		//System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
 		System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
@@ -251,12 +245,6 @@ public class Client {
 			sslsocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",4444);
 			InputStream inputStream = sslsocket.getInputStream();
 			OutputStream outputStream = sslsocket.getOutputStream();
-			
-			//TEST: socket connection without SSL
-//			Socket govSocket = new Socket("127.0.0.1", 4444);
-//			
-//			InputStream inputStream = govSocket.getInputStream();
-//			OutputStream outputStream = govSocket.getOutputStream();
 			
 			InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
 			BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
@@ -295,8 +283,22 @@ public class Client {
 	//step 2
 	private void initConnectionServiceProvider() throws IOException {
 		//connection to the SP
-		providerSocket = new Socket("127.0.0.1", 8888);
+//		providerSocket = new Socket("127.0.0.1", 8888);
+//		
+//		InputStream providerInputStream = providerSocket.getInputStream();
+//		OutputStream providerOutputStream = providerSocket.getOutputStream();
+//		InputStreamReader providerInputStreamReader = new InputStreamReader(providerInputStream);
 		
+		HttpsURLConnection.setDefaultHostnameVerifier ((hostname, session) -> true);
+		System.setProperty("javax.net.ssl.trustStoreType", "jks");
+		//System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
+		System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
+		System.setProperty("javax.net.ssl.trustStorePassword", "123456");
+		
+		//SSL socket connection
+		SSLSocketFactory socketFactory = ((SSLSocketFactory)SSLSocketFactory.getDefault());
+		
+		providerSocket = (SSLSocket) socketFactory.createSocket("127.0.0.1",8888);
 		InputStream providerInputStream = providerSocket.getInputStream();
 		OutputStream providerOutputStream = providerSocket.getOutputStream();
 		InputStreamReader providerInputStreamReader = new InputStreamReader(providerInputStream);
@@ -400,7 +402,8 @@ public class Client {
         
         String serviceResponse = providerReader.readLine();
         System.out.println("Server: " + serviceResponse);
-        communication.append("Server requests: " + new String(hexStringToByteArray(serviceResponse)) + "\n");
+        //TODO: error?!
+        //communication.append("Server requests: " + new String(hexStringToByteArray(serviceResponse)) + "\n");
         
         return serviceResponse;
 		
