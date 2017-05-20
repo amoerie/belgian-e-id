@@ -43,7 +43,7 @@
 				<echo>copying CAP file...</echo>
 			<exec executable="cmd">
 			    <arg value="/c"/>
-			    <arg value="copy &quot;target\be\vub\smartcard\javacard\smartcard.CAP&quot; GPShell-1.4.4"/>
+			    <arg value="copy &quot;target\be\msec\smartcard\javacard\smartcard.CAP&quot; GPShell-1.4.4"/>
 			  </exec>
 		</target>
 	

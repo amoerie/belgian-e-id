@@ -1,0 +1,53 @@
+SELF SIGNED CA maken:
+openssl req -x509 -config openssl-ca.cnf -newkey rsa:512 -sha256 -keyout cakey.pem -out cacert.pem -outform PEM
+
+KEYS + CERTIFICATE REQUESTS MAKEN:
+openssl req -config openssl-gov.cnf -newkey rsa:512 -sha256 -out govcert.csr -outform PEM
+openssl req -config openssl-taxonweb.cnf -newkey rsa:512 -sha256 -out taxonwebcert.csr -outform PEM
+openssl req -config openssl-studentportal.cnf -newkey rsa:512 -sha256 -out studentportalcert.csr -outform PEM
+openssl req -config openssl-facebook.cnf -newkey rsa:512 -sha256 -out facebookcert.csr -outform PEM
+openssl req -config openssl-google.cnf -newkey rsa:512 -sha256 -out googlecert.csr -outform PEM
+openssl req -config openssl-colruyt.cnf -newkey rsa:512 -sha256 -out colruytcert.csr -outform PEM
+openssl req -config openssl-delhaize.cnf -newkey rsa:512 -sha256 -out delhaizecert.csr -outform PEM
+openssl req -config openssl-kinepolis.cnf -newkey rsa:512 -sha256 -out kinepoliscert.csr -outform PEM
+openssl req -config openssl-planckendael.cnf -newkey rsa:512 -sha256 -out planckendaelcert.csr -outform PEM
+openssl req -config openssl-common.cnf -newkey rsa:512 -sha256 -out commoncert.csr -outform PEM
+
+CERTIFICATE REQUESTS TEKENEN MET CA:
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out govcert.pem -infiles govcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out taxonwebcert.pem -infiles taxonwebcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out studentportalcert.pem -infiles studentportalcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out facebookcert.pem -infiles facebookcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out googlecert.pem -infiles googlecert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out colruytcert.pem -infiles colruytcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out delhaizecert.pem -infiles delhaizecert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out kinepoliscert.pem -infiles kinepoliscert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out planckendaelcert.pem -infiles planckendaelcert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out commoncert.pem -infiles commoncert.csr
+
+PEMs converteren naar p12:
+openssl pkcs12 -export -in govcert.pem -inkey govkey.pem -chain -CAfile cacert.pem -name "gov" -out gov.p12
+openssl pkcs12 -export -in colruytcert.pem -inkey colruytkey.pem -chain -CAfile cacert.pem -name "colruyt" -out colruyt.p12
+openssl pkcs12 -export -in delhaizecert.pem -inkey delhaizekey.pem -chain -CAfile cacert.pem -name "delhaize" -out delhaize.p12
+openssl pkcs12 -export -in taxonwebcert.pem -inkey taxonwebkey.pem -chain -CAfile cacert.pem -name "taxonweb" -out taxonweb.p12
+openssl pkcs12 -export -in studentportalcert.pem -inkey studentportalkey.pem -chain -CAfile cacert.pem -name "studentportal" -out studentportal.p12
+openssl pkcs12 -export -in facebookcert.pem -inkey facebookkey.pem -chain -CAfile cacert.pem -name "facebook" -out facebook.p12
+openssl pkcs12 -export -in googlecert.pem -inkey googlekey.pem -chain -CAfile cacert.pem -name "google" -out google.p12
+openssl pkcs12 -export -in kinepoliscert.pem -inkey kinepoliskey.pem -chain -CAfile cacert.pem -name "kinepolis" -out kinepolis.p12
+openssl pkcs12 -export -in planckendaelcert.pem -inkey planckendaelkey.pem -chain -CAfile cacert.pem -name "planckendael" -out planckendael.p12
+openssl pkcs12 -export -in commoncert.pem -inkey commonkey.pem -chain -CAfile cacert.pem -name "common" -out common.p12
+
+nieuwe keystore maken:
+keytool -genkey -alias belgianeid -keyalg RSA -keystore belgianeid.jks -keysize 512
+
+p12s importeren naar JKS keystore:
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore colruyt.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore delhaize.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore gov.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore taxonweb.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore studentportal.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore facebook.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore google.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore kinepolis.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore planckendael.p12 -srcstoretype PKCS12
+keytool -importkeystore -deststorepass 123456 -destkeystore belgianeid.jks -srckeystore common.p12 -srcstoretype PKCS12
