@@ -1,7 +1,5 @@
 package be.msec.client;
 
-//import be.msec.client.connection.Connection;
-
 import be.msec.client.connection.IConnection;
 import be.msec.client.connection.SimulatedConnection;
 
@@ -18,8 +16,7 @@ import java.io.*;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Date;
-
-//import javax.smartcardio.*;
+import java.util.Objects;
 
 public class Client {
 
@@ -58,19 +55,19 @@ public class Client {
     private static final int APDU_MAX_BUFF_SIZE = 128;
 
     //connection to card
-    private IConnection con;
-    private CommandAPDU a;
-    private ResponseAPDU res;
+    private IConnection connectionWithCard;
+    private CommandAPDU cardCommandAPDU;
+    private ResponseAPDU cardResponseAPDU;
 
     //UI variables
     private JFrame frame;
     private JTextArea communication;
 
     //SP connection
-    //Socket providerSocket;
-    private SSLSocket providerSocket;
-    private BufferedReader providerReader;
-    private PrintWriter providerWriter;
+    //Socket activeServiceProviderSocket;
+    private SSLSocket activeServiceProviderSocket;
+    private BufferedReader activeServiceProviderReader;
+    private PrintWriter activeServiceProviderWriter;
 
     /**
      * Launch the application.
@@ -92,7 +89,7 @@ public class Client {
     private void initialize() {
         frame = new JFrame();
         frame.setBounds(200, 200, 400, 400);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         JButton btnConnectButton = new JButton("Connect");
         btnConnectButton.addActionListener(new ActionListener() {
@@ -112,12 +109,12 @@ public class Client {
 
     private void cardConnect() throws Exception {
         //Simulation:
-        con = new SimulatedConnection();
+        connectionWithCard = new SimulatedConnection();
 
         //Real Card:
-        //con = new Connection();
+        //connectionWithCard = new Connection();
         //((Connection)c).setTerminal(0); //depending on which cardreader you use
-        con.connect();
+        connectionWithCard.connect();
 
         try {
 
@@ -135,16 +132,16 @@ public class Client {
             authenticateServiceProvider();
 
             //step 3: authenticateCard()
-            String serviceResponse = authenticateCard();
+            String serviceProviderResponse = authenticateCard();
 
             //step 4: releaseAttributes()
-            releaseAttributes(serviceResponse);
+            releaseAttributes(serviceProviderResponse);
 
             closeConnectionServiceProvider();
         } catch (Exception e) {
             throw e;
         } finally {
-            con.close();  // close the connection with the card
+            connectionWithCard.close();  // close the connection with the card
         }
     }
 
@@ -152,21 +149,21 @@ public class Client {
     private void createSelectApplet() throws Exception {
         try {
             //0. create applet (only for simulator!!!)
-            a = new CommandAPDU(0x00, 0xa4, 0x04, 0x00, new byte[]{(byte) 0xa0, 0x00, 0x00, 0x00, 0x62, 0x03, 0x01, 0x08, 0x01}, 0x7f);
-            res = con.transmit(a);
-            System.out.println(res);
-            if (res.getSW() != 0x9000) throw new Exception("select installer applet failed");
+            cardCommandAPDU = new CommandAPDU(0x00, 0xa4, 0x04, 0x00, new byte[]{(byte) 0xa0, 0x00, 0x00, 0x00, 0x62, 0x03, 0x01, 0x08, 0x01}, 0x7f);
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            System.out.println(cardResponseAPDU);
+            if (cardResponseAPDU.getSW() != 0x9000) throw new Exception("select installer applet failed");
 
-            a = new CommandAPDU(0x80, 0xB8, 0x00, 0x00, new byte[]{0xb, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x00, 0x00}, 0x7f);
-            res = con.transmit(a);
-            System.out.println(res);
-            if (res.getSW() != 0x9000) throw new Exception("Applet creation failed");
+            cardCommandAPDU = new CommandAPDU(0x80, 0xB8, 0x00, 0x00, new byte[]{0xb, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x00, 0x00}, 0x7f);
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            System.out.println(cardResponseAPDU);
+            if (cardResponseAPDU.getSW() != 0x9000) throw new Exception("Applet creation failed");
 
-            //1. Select applet  (not required on a real card, applet is selected by default)
-            a = new CommandAPDU(0x00, 0xa4, 0x04, 0x00, new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x00}, 0x7f);
-            res = con.transmit(a);
-            System.out.println(res);
-            if (res.getSW() != 0x9000) throw new Exception("Applet selection failed");
+            //1. Select applet  (not required on cardCommandAPDU real card, applet is selected by default)
+            cardCommandAPDU = new CommandAPDU(0x00, 0xa4, 0x04, 0x00, new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x00}, 0x7f);
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            System.out.println(cardResponseAPDU);
+            if (cardResponseAPDU.getSW() != 0x9000) throw new Exception("Applet selection failed");
 
         } catch (Exception e) {
             throw e;
@@ -180,34 +177,36 @@ public class Client {
         //step 1 (1) Hello", send currentTime to card
         Date date = new Date();
         Long timestamp = date.getTime() / 1000;
-        a = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00, longToBytes(timestamp));
-        res = con.transmit(a);
-        System.out.println(res);
+        cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00, longToBytes(timestamp));
+        cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+        System.out.println(cardResponseAPDU);
 
         //receive reqRevalidation
-        if (res.getSW() == SW_REQ_REVALIDATION) {
+        if (cardResponseAPDU.getSW() == SW_REQ_REVALIDATION) {
             communication.append("RevalidationRequest: new timestamp required from Government server\n");
 
             byte[] new_time = getNewTimeFromGov();
 
             if (new_time != null) {
                 //step 1 (9) update time on card
-                a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_TIME, 0x00, 0x00, new_time);
-                res = con.transmit(a);
-                System.out.println(res);
-                if (res.getSW() == SW_ABORT) throw new Exception("Aborted: Cannot update time");
-                else if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+                cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, NEW_TIME, 0x00, 0x00, new_time);
+                cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+                System.out.println(cardResponseAPDU);
+                if (cardResponseAPDU.getSW() == SW_ABORT) throw new Exception("Aborted: Cannot update time");
+                else if (cardResponseAPDU.getSW() != 0x9000)
+                    throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
 
                 communication.append("RevalidationRequest: new timestamp is saved on the card\n");
             }
 
             //****only for testing the code: extra send hello to the card with the same timestamp
-            //a = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00,longToBytes(timestamp));
-            //res = con.transmit(a);
-            //if (res.getSW()!=SW_REQ_REVALIDATION) {
+            //cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, HELLO_DIS, 0x00, 0x00,longToBytes(timestamp));
+            //cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            //if (cardResponseAPDU.getSW()!=SW_REQ_REVALIDATION) {
             //	communication.append("NEW RevalidationRequest is false now\n");
             //}
-            else if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+            else if (cardResponseAPDU.getSW() != 0x9000)
+                throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
 
         } else { //goto step 2 : authenticateServiceProvider
             communication.append("RevalidationRequest: false");
@@ -254,8 +253,6 @@ public class Client {
                 communication.append(msgFromGServer + "\n");
                 return hexStringToByteArray(msgFromGServer);
             }
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -266,10 +263,10 @@ public class Client {
     //step 2
     private void initConnectionServiceProvider() throws IOException {
         //connection to the SP
-//		providerSocket = new Socket("127.0.0.1", 8888);
+//		activeServiceProviderSocket = new Socket("127.0.0.1", 8888);
 //		
-//		InputStream providerInputStream = providerSocket.getInputStream();
-//		OutputStream providerOutputStream = providerSocket.getOutputStream();
+//		InputStream providerInputStream = activeServiceProviderSocket.getInputStream();
+//		OutputStream providerOutputStream = activeServiceProviderSocket.getOutputStream();
 //		InputStreamReader providerInputStreamReader = new InputStreamReader(providerInputStream);
 
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
@@ -281,17 +278,17 @@ public class Client {
         //SSL socket connection
         SSLSocketFactory socketFactory = ((SSLSocketFactory) SSLSocketFactory.getDefault());
 
-        providerSocket = (SSLSocket) socketFactory.createSocket("127.0.0.1", 8888);
-        InputStream providerInputStream = providerSocket.getInputStream();
-        OutputStream providerOutputStream = providerSocket.getOutputStream();
+        activeServiceProviderSocket = (SSLSocket) socketFactory.createSocket("127.0.0.1", 8888);
+        InputStream providerInputStream = activeServiceProviderSocket.getInputStream();
+        OutputStream providerOutputStream = activeServiceProviderSocket.getOutputStream();
         InputStreamReader providerInputStreamReader = new InputStreamReader(providerInputStream);
 
-        providerReader = new BufferedReader(providerInputStreamReader);
-        providerWriter = new PrintWriter(providerOutputStream, true);
+        activeServiceProviderReader = new BufferedReader(providerInputStreamReader);
+        activeServiceProviderWriter = new PrintWriter(providerOutputStream, true);
     }
 
     private void authenticateServiceProvider() throws Exception {
-        String certificateMessage = providerReader.readLine();
+        String certificateMessage = activeServiceProviderReader.readLine();
         if (certificateMessage.equalsIgnoreCase("Abort")) {
             communication.append("Error in connection with service provider\n");
             try {
@@ -312,48 +309,53 @@ public class Client {
                     byte[] msg_chunk = new byte[msg_chunk_length];
                     System.arraycopy(msg, APDU_MAX_BUFF_SIZE * i, msg_chunk, 0, msg_chunk_length);
                     System.out.println(byteArrayToHexString(msg_chunk));
-                    a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_SERVICE_CERT, 0x00, 0x00, msg_chunk);
-                    res = con.transmit(a);
-                    if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+                    cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, NEW_SERVICE_CERT, 0x00, 0x00, msg_chunk);
+                    cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+                    if (cardResponseAPDU.getSW() != 0x9000)
+                        throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
                 }
             }
             //SERVICE_CERT_DONE
-            a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CERT_DONE, 0x00, 0x00, new byte[]{0x00});
-            res = con.transmit(a);
-            if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+            cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CERT_DONE, 0x00, 0x00, new byte[]{0x00});
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            if (cardResponseAPDU.getSW() != 0x9000)
+                throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
             System.out.println("Certificate sent");
 
 
             //step 2 (2) -> (7) verify service certificate + timestamp + challenge from card
-            a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_AUTH, 0x00, 0x00, new byte[]{0x00});
-            res = con.transmit(a);
-            if (res.getSW() == SW_SIG_NO_MATCH) {
+            cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_AUTH, 0x00, 0x00, new byte[]{0x00});
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            if (cardResponseAPDU.getSW() == SW_SIG_NO_MATCH) {
                 communication.append("Problem with service certificate. Aborting.\n");
                 throw new Exception("Problem with service certificate. Aborting.\n");
             }
             //step 2 (3) - catch verify timestamp
-            else if (res.getSW() == SW_CERT_EXPIRED) {
+            else if (cardResponseAPDU.getSW() == SW_CERT_EXPIRED) {
                 communication.append("Service provider certificate expired. Abort.\n");
                 throw new Exception("Service provider certificate expired");
-            } else if (res.getSW() != 0x9000) throw new Exception("Exception..." + res.getSW());
+            } else if (cardResponseAPDU.getSW() != 0x9000)
+                throw new Exception("Exception..." + cardResponseAPDU.getSW());
 
             System.out.println("Certificate verified");
             communication.append("Service provider certificate verified\n");
 
 
             //step 2 (8)  Send symmetric key and challenge to service provider
-            byte[] sp_auth_response = res.getData();
-            providerWriter.println(byteArrayToHexString(sp_auth_response).substring(14)); //send only the data
+            byte[] sp_auth_response = cardResponseAPDU.getData();
+            activeServiceProviderWriter.println(byteArrayToHexString(sp_auth_response).substring(14)); //send only the data
             //System.out.println(byteArrayToHexString(sp_auth_response));
             //System.out.println("Client: " + byteArrayToHexString(sp_auth_response).substring(14));
 
             // step 2 (13) send the response to the card
-            String serviceResponse = providerReader.readLine();
+            String serviceResponse = activeServiceProviderReader.readLine();
             System.out.println("Service response: " + serviceResponse);
-            a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_RESP_CHALLENGE, 0x00, 0x00, hexStringToByteArray(serviceResponse));
-            res = con.transmit(a);
-            if (res.getSW() == SW_ABORT) throw new Exception("Not a correct response, aborting...");
-            else if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+            cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_RESP_CHALLENGE, 0x00, 0x00, hexStringToByteArray(serviceResponse));
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            if (cardResponseAPDU.getSW() == SW_ABORT)
+                throw new Exception("Not cardCommandAPDU correct response, aborting...");
+            else if (cardResponseAPDU.getSW() != 0x9000)
+                throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
 
             communication.append("Service is authenticated to card\n");
 
@@ -366,28 +368,30 @@ public class Client {
         //Step 3 (1)
         String service_chall_response_hex = "";
         int j = 0;
-        a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CHALLENGE, 0x00, 0x00, new byte[]{(byte) j});
-        res = con.transmit(a);
-        byte[] service_chall_response = res.getData();
+        cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CHALLENGE, 0x00, 0x00, new byte[]{(byte) j});
+        cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+        byte[] service_chall_response = cardResponseAPDU.getData();
         while (Integer.parseInt(byteArrayToHexString(new byte[]{service_chall_response[6]}), 16) > 0) {
             System.out.println("response part " + j);
             j++;
             System.out.println(byteArrayToHexString(service_chall_response));
             service_chall_response_hex = service_chall_response_hex + byteArrayToHexString(service_chall_response).substring(14);
-            a = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CHALLENGE, 0x00, 0x00, new byte[]{(byte) j});
-            res = con.transmit(a);
-            service_chall_response = res.getData();
+            cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, SERVICE_CHALLENGE, 0x00, 0x00, new byte[]{(byte) j});
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            service_chall_response = cardResponseAPDU.getData();
         }
 
         System.out.println("Client: " + service_chall_response_hex);
-        providerWriter.println(service_chall_response_hex);
+        activeServiceProviderWriter.println(service_chall_response_hex);
 
-        String serviceResponse = providerReader.readLine();
-        System.out.println("Server: " + serviceResponse);
-        //TODO: check if ABORT message!
-        //communication.append("Server requests: " + new String(hexStringToByteArray(serviceResponse)) + "\n");
+        String serviceProviderResponse = activeServiceProviderReader.readLine();
+        System.out.println("Server: " + serviceProviderResponse);
+        if("Abort".equals(serviceProviderResponse)) {
+            throw new Exception("Service provider refused to authenticate the card!");
+        }
+        communication.append("Service Provider response: " + new String(hexStringToByteArray(serviceProviderResponse)) + "\n");
 
-        return serviceResponse;
+        return serviceProviderResponse;
 
     }
 
@@ -404,18 +408,20 @@ public class Client {
                 byte[] msg_chunk = new byte[msg_chunk_length];
                 System.arraycopy(msg, APDU_MAX_BUFF_SIZE * i, msg_chunk, 0, msg_chunk_length);
                 System.out.println(byteArrayToHexString(msg_chunk));
-                a = new CommandAPDU(IDENTITY_CARD_CLA, NEW_QUERY, 0x00, 0x00, msg_chunk);
-                res = con.transmit(a);
-                if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+                cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, NEW_QUERY, 0x00, 0x00, msg_chunk);
+                cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+                if (cardResponseAPDU.getSW() != 0x9000)
+                    throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
             }
         }
-        a = new CommandAPDU(IDENTITY_CARD_CLA, QUERY_DONE, 0x00, 0x00, new byte[]{0x00});
-        res = con.transmit(a);
-        if (res.getSW() == SW_ABORT) {
+        cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, QUERY_DONE, 0x00, 0x00, new byte[]{0x00});
+        cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+        if (cardResponseAPDU.getSW() == SW_ABORT) {
             System.out.println("Client: " + "Aborting... bad query");
-            providerWriter.println("Badquery");
+            activeServiceProviderWriter.println("Badquery");
             throw new Exception("Aborted: Bad query from server");
-        } else if (res.getSW() != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+        } else if (cardResponseAPDU.getSW() != 0x9000)
+            throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
         System.out.println("Query sent");
 
         communication.append("PIN required\n");
@@ -443,43 +449,43 @@ public class Client {
                     pin_array[k] = (byte) Character.getNumericValue(password[k]);
                 }
 
-                a = new CommandAPDU(IDENTITY_CARD_CLA, VALIDATE_PIN_INS, 0x00, 0x00, pin_array);
-                res = con.transmit(a);
-                pin_result = res.getSW();
+                cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, VALIDATE_PIN_INS, 0x00, 0x00, pin_array);
+                cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+                pin_result = cardResponseAPDU.getSW();
 
-                System.out.println(res);
+                System.out.println(cardResponseAPDU);
             }
         }
-        if (pin_result != 0x9000) throw new Exception("Exception on the card: " + res.getSW());
+        if (pin_result != 0x9000) throw new Exception("Exception on the card: " + cardResponseAPDU.getSW());
         System.out.println("PIN Verified");
         communication.append("PIN OK!\n");
 
         //Step 4 (10) - Send query result to sp
         String query = "";
         int j = 0;
-        a = new CommandAPDU(IDENTITY_CARD_CLA, GET_QUERY, 0x00, 0x00, new byte[]{(byte) j});
-        res = con.transmit(a);
-        byte[] query_chunk = res.getData();
+        cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, GET_QUERY, 0x00, 0x00, new byte[]{(byte) j});
+        cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+        byte[] query_chunk = cardResponseAPDU.getData();
         while (Integer.parseInt(byteArrayToHexString(new byte[]{query_chunk[6]}), 16) > 0) {
             System.out.println("response part " + j);
             j++;
             System.out.println(byteArrayToHexString(query_chunk));
             query = query + byteArrayToHexString(query_chunk).substring(14);
-            a = new CommandAPDU(IDENTITY_CARD_CLA, GET_QUERY, 0x00, 0x00, new byte[]{(byte) j});
-            res = con.transmit(a);
-            query_chunk = res.getData();
+            cardCommandAPDU = new CommandAPDU(IDENTITY_CARD_CLA, GET_QUERY, 0x00, 0x00, new byte[]{(byte) j});
+            cardResponseAPDU = connectionWithCard.transmit(cardCommandAPDU);
+            query_chunk = cardResponseAPDU.getData();
         }
 
         System.out.println("Client: " + query);
-        providerWriter.println(query);
+        activeServiceProviderWriter.println(query);
 
-        System.out.println("Server: " + providerReader.readLine());
+        System.out.println("Server: " + activeServiceProviderReader.readLine());
 
         communication.append("Data is sent to server. Check the output tab!\n");
     }
 
     private void closeConnectionServiceProvider() throws IOException {
-        providerSocket.close();
+        activeServiceProviderSocket.close();
     }
 
 
@@ -513,4 +519,4 @@ public class Client {
     }
 
 }
-	
+
