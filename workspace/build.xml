@@ -1,0 +1,540 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="workspace" default="all">
+  
+  
+  <property file="build.properties"/>
+  <!-- Uncomment the following property if no tests compilation is needed -->
+  <!-- 
+  <property name="skip.tests" value="true"/>
+   -->
+  
+  <!-- Compiler options -->
+  
+  <property name="compiler.debug" value="on"/>
+  <property name="compiler.generate.no.warnings" value="off"/>
+  <property name="compiler.args" value=""/>
+  <property name="compiler.max.memory" value="700m"/>
+  <patternset id="ignored.files">
+    <exclude name="**/*.hprof/**"/>
+    <exclude name="**/*.pyc/**"/>
+    <exclude name="**/*.pyo/**"/>
+    <exclude name="**/*.rbc/**"/>
+    <exclude name="**/*.yarb/**"/>
+    <exclude name="**/*~/**"/>
+    <exclude name="**/.DS_Store/**"/>
+    <exclude name="**/.git/**"/>
+    <exclude name="**/.hg/**"/>
+    <exclude name="**/.svn/**"/>
+    <exclude name="**/CVS/**"/>
+    <exclude name="**/__pycache__/**"/>
+    <exclude name="**/_svn/**"/>
+    <exclude name="**/vssver.scc/**"/>
+    <exclude name="**/vssver2.scc/**"/>
+  </patternset>
+  <patternset id="library.patterns">
+    <include name="*.war"/>
+    <include name="*.swc"/>
+    <include name="*.apk"/>
+    <include name="*.zip"/>
+    <include name="*.ear"/>
+    <include name="*.egg"/>
+    <include name="*.ane"/>
+    <include name="*.jar"/>
+  </patternset>
+  <patternset id="compiler.resources">
+    <exclude name="**/?*.java"/>
+    <exclude name="**/?*.form"/>
+    <exclude name="**/?*.class"/>
+    <exclude name="**/?*.groovy"/>
+    <exclude name="**/?*.scala"/>
+    <exclude name="**/?*.flex"/>
+    <exclude name="**/?*.kt"/>
+    <exclude name="**/?*.clj"/>
+    <exclude name="**/?*.aj"/>
+  </patternset>
+  
+  <!-- JDK definitions -->
+  
+  <property name="jdk.bin.1.8" value="${jdk.home.1.8}/bin"/>
+  <path id="jdk.classpath.1.8">
+    <fileset dir="${jdk.home.1.8}">
+      <include name="jre/lib/charsets.jar"/>
+      <include name="jre/lib/deploy.jar"/>
+      <include name="jre/lib/ext/access-bridge-64.jar"/>
+      <include name="jre/lib/ext/cldrdata.jar"/>
+      <include name="jre/lib/ext/dnsns.jar"/>
+      <include name="jre/lib/ext/jaccess.jar"/>
+      <include name="jre/lib/ext/jfxrt.jar"/>
+      <include name="jre/lib/ext/localedata.jar"/>
+      <include name="jre/lib/ext/nashorn.jar"/>
+      <include name="jre/lib/ext/sunec.jar"/>
+      <include name="jre/lib/ext/sunjce_provider.jar"/>
+      <include name="jre/lib/ext/sunmscapi.jar"/>
+      <include name="jre/lib/ext/sunpkcs11.jar"/>
+      <include name="jre/lib/ext/zipfs.jar"/>
+      <include name="jre/lib/javaws.jar"/>
+      <include name="jre/lib/jce.jar"/>
+      <include name="jre/lib/jfr.jar"/>
+      <include name="jre/lib/jfxswt.jar"/>
+      <include name="jre/lib/jsse.jar"/>
+      <include name="jre/lib/management-agent.jar"/>
+      <include name="jre/lib/plugin.jar"/>
+      <include name="jre/lib/resources.jar"/>
+      <include name="jre/lib/rt.jar"/>
+    </fileset>
+  </path>
+  
+  <property name="project.jdk.home" value="${jdk.home.1.8}"/>
+  <property name="project.jdk.bin" value="${jdk.bin.1.8}"/>
+  <property name="project.jdk.classpath" value="jdk.classpath.1.8"/>
+  
+  <!-- Modules -->
+  
+  
+  <!-- Module Government -->
+  
+  <dirname property="module.government.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.government" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.government" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.government" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.government" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="government.output.dir" value="${module.government.basedir}/Government/bin"/>
+  <property name="government.testoutput.dir" value="${module.government.basedir}/Government/bin"/>
+  
+  <path id="government.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="government.module.production.classpath">
+    <path refid="${module.jdk.classpath.government}"/>
+  </path>
+  
+  <path id="government.runtime.production.module.classpath">
+    <pathelement location="${government.output.dir}"/>
+  </path>
+  
+  <path id="government.module.classpath">
+    <pathelement location="${government.output.dir}"/>
+    <path refid="${module.jdk.classpath.government}"/>
+  </path>
+  
+  <path id="government.runtime.module.classpath">
+    <pathelement location="${government.output.dir}"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.government">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.government">
+    <patternset refid="excluded.from.module.government"/>
+  </patternset>
+  
+  <path id="government.module.sourcepath">
+    <dirset dir="${module.government.basedir}/Government">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.government" depends="compile.module.government.production,compile.module.government.tests" description="Compile module Government"/>
+  
+  <target name="compile.module.government.production" description="Compile module Government; production classes">
+    <mkdir dir="${government.output.dir}"/>
+    <javac destdir="${government.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.government}/javac">
+      <compilerarg line="${compiler.args.government}"/>
+      <bootclasspath refid="government.module.bootclasspath"/>
+      <classpath refid="government.module.production.classpath"/>
+      <src refid="government.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.government"/>
+    </javac>
+    
+    <copy todir="${government.output.dir}">
+      <fileset dir="${module.government.basedir}/Government/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.government.tests" depends="compile.module.government.production" description="compile module Government; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.government" description="cleanup module">
+    <delete dir="${government.output.dir}"/>
+    <delete dir="${government.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module JavaCard -->
+  
+  <dirname property="module.javacard.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.javacard" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.javacard" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.javacard" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.javacard" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="javacard.output.dir" value="${module.javacard.basedir}/JavaCard/bin"/>
+  <property name="javacard.testoutput.dir" value="${module.javacard.basedir}/JavaCard/bin"/>
+  
+  <path id="javacard.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="javacard.module.production.classpath">
+    <path refid="${module.jdk.classpath.javacard}"/>
+    <pathelement location="${basedir}/../../../eclipse libraries/java_card_kit-2_2_2/lib/api.jar"/>
+  </path>
+  
+  <path id="javacard.runtime.production.module.classpath">
+    <pathelement location="${javacard.output.dir}"/>
+    <pathelement location="${basedir}/../../../eclipse libraries/java_card_kit-2_2_2/lib/api.jar"/>
+  </path>
+  
+  <path id="javacard.module.classpath">
+    <pathelement location="${javacard.output.dir}"/>
+    <path refid="${module.jdk.classpath.javacard}"/>
+    <pathelement location="${basedir}/../../../eclipse libraries/java_card_kit-2_2_2/lib/api.jar"/>
+  </path>
+  
+  <path id="javacard.runtime.module.classpath">
+    <pathelement location="${javacard.output.dir}"/>
+    <pathelement location="${basedir}/../../../eclipse libraries/java_card_kit-2_2_2/lib/api.jar"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.javacard">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.javacard">
+    <patternset refid="excluded.from.module.javacard"/>
+  </patternset>
+  
+  <path id="javacard.module.sourcepath">
+    <dirset dir="${module.javacard.basedir}/JavaCard">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.javacard" depends="compile.module.javacard.production,compile.module.javacard.tests" description="Compile module JavaCard"/>
+  
+  <target name="compile.module.javacard.production" description="Compile module JavaCard; production classes">
+    <mkdir dir="${javacard.output.dir}"/>
+    <javac destdir="${javacard.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.javacard}/javac">
+      <compilerarg line="${compiler.args.javacard}"/>
+      <bootclasspath refid="javacard.module.bootclasspath"/>
+      <classpath refid="javacard.module.production.classpath"/>
+      <src refid="javacard.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.javacard"/>
+    </javac>
+    
+    <copy todir="${javacard.output.dir}">
+      <fileset dir="${module.javacard.basedir}/JavaCard/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.javacard.tests" depends="compile.module.javacard.production" description="compile module JavaCard; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.javacard" description="cleanup module">
+    <delete dir="${javacard.output.dir}"/>
+    <delete dir="${javacard.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module Middleware -->
+  
+  <dirname property="module.middleware.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.middleware" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.middleware" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.middleware" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.middleware" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="middleware.output.dir" value="${module.middleware.basedir}/Middleware/bin"/>
+  <property name="middleware.testoutput.dir" value="${module.middleware.basedir}/Middleware/bin"/>
+  
+  <path id="middleware.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="middleware.module.production.classpath">
+    <path refid="${module.jdk.classpath.middleware}"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
+    <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
+  </path>
+  
+  <path id="middleware.runtime.production.module.classpath">
+    <pathelement location="${middleware.output.dir}"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
+    <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
+  </path>
+  
+  <path id="middleware.module.classpath">
+    <pathelement location="${middleware.output.dir}"/>
+    <path refid="${module.jdk.classpath.middleware}"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
+    <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
+  </path>
+  
+  <path id="middleware.runtime.module.classpath">
+    <pathelement location="${middleware.output.dir}"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
+    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
+    <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.middleware">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.middleware">
+    <patternset refid="excluded.from.module.middleware"/>
+  </patternset>
+  
+  <path id="middleware.module.sourcepath">
+    <dirset dir="${module.middleware.basedir}/Middleware">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.middleware" depends="compile.module.middleware.production,compile.module.middleware.tests" description="Compile module Middleware"/>
+  
+  <target name="compile.module.middleware.production" description="Compile module Middleware; production classes">
+    <mkdir dir="${middleware.output.dir}"/>
+    <javac destdir="${middleware.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.middleware}/javac">
+      <compilerarg line="${compiler.args.middleware}"/>
+      <bootclasspath refid="middleware.module.bootclasspath"/>
+      <classpath refid="middleware.module.production.classpath"/>
+      <src refid="middleware.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.middleware"/>
+    </javac>
+    
+    <copy todir="${middleware.output.dir}">
+      <fileset dir="${module.middleware.basedir}/Middleware/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.middleware.tests" depends="compile.module.middleware.production" description="compile module Middleware; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.middleware" description="cleanup module">
+    <delete dir="${middleware.output.dir}"/>
+    <delete dir="${middleware.testoutput.dir}"/>
+  </target>
+  
+  
+  <!-- Module ServiceProvider -->
+  
+  <dirname property="module.serviceprovider.basedir" file="${ant.file}"/>
+  
+  
+  <property name="module.jdk.home.serviceprovider" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.serviceprovider" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.serviceprovider" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.serviceprovider" value="-encoding UTF-8 -source 8 -target 8 ${compiler.args}"/>
+  
+  <property name="serviceprovider.output.dir" value="${module.serviceprovider.basedir}/ServiceProvider/build/classes"/>
+  <property name="serviceprovider.testoutput.dir" value="${module.serviceprovider.basedir}/ServiceProvider/build/classes"/>
+  
+  <path id="serviceprovider.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="serviceprovider.module.production.classpath">
+    <path refid="${module.jdk.classpath.serviceprovider}"/>
+  </path>
+  
+  <path id="serviceprovider.runtime.production.module.classpath">
+    <pathelement location="${serviceprovider.output.dir}"/>
+  </path>
+  
+  <path id="serviceprovider.module.classpath">
+    <pathelement location="${serviceprovider.output.dir}"/>
+    <path refid="${module.jdk.classpath.serviceprovider}"/>
+  </path>
+  
+  <path id="serviceprovider.runtime.module.classpath">
+    <pathelement location="${serviceprovider.output.dir}"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.serviceprovider">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.serviceprovider">
+    <patternset refid="excluded.from.module.serviceprovider"/>
+  </patternset>
+  
+  <path id="serviceprovider.module.sourcepath">
+    <dirset dir="${module.serviceprovider.basedir}/ServiceProvider">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.serviceprovider" depends="compile.module.serviceprovider.production,compile.module.serviceprovider.tests" description="Compile module ServiceProvider"/>
+  
+  <target name="compile.module.serviceprovider.production" description="Compile module ServiceProvider; production classes">
+    <mkdir dir="${serviceprovider.output.dir}"/>
+    <javac destdir="${serviceprovider.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.serviceprovider}/javac">
+      <compilerarg line="${compiler.args.serviceprovider}"/>
+      <bootclasspath refid="serviceprovider.module.bootclasspath"/>
+      <classpath refid="serviceprovider.module.production.classpath"/>
+      <src refid="serviceprovider.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.serviceprovider"/>
+    </javac>
+    
+    <copy todir="${serviceprovider.output.dir}">
+      <fileset dir="${module.serviceprovider.basedir}/ServiceProvider/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.serviceprovider.tests" depends="compile.module.serviceprovider.production" description="compile module ServiceProvider; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.serviceprovider" description="cleanup module">
+    <delete dir="${serviceprovider.output.dir}"/>
+    <delete dir="${serviceprovider.testoutput.dir}"/>
+  </target>
+  
+  <target name="init" description="Build initialization">
+    <!-- Perform any build initialization in this target -->
+  </target>
+  
+  <target name="clean" depends="clean.module.government, clean.module.javacard, clean.module.middleware, clean.module.serviceprovider" description="cleanup all"/>
+  
+  <target name="build.modules" depends="init, clean, compile.module.government, compile.module.javacard, compile.module.middleware, compile.module.serviceprovider" description="build all modules"/>
+  
+  <target name="init.artifacts">
+    <property name="artifacts.temp.dir" value="${basedir}/__artifacts_temp"/>
+    <property name="artifact.output.government:jar" value="${basedir}/Government/artifacts"/>
+    <property name="artifact.output.middleware:jar" value="${basedir}/Middleware/artifacts"/>
+    <property name="artifact.output.serviceprovider:jar" value="${basedir}/ServiceProvider/artifacts"/>
+    <mkdir dir="${artifacts.temp.dir}"/>
+    <property name="temp.jar.path.Government.jar" value="${artifacts.temp.dir}/Government.jar"/>
+    <property name="temp.jar.path.Middleware.jar" value="${artifacts.temp.dir}/Middleware.jar"/>
+    <property name="temp.jar.path.ServiceProvider.jar" value="${artifacts.temp.dir}/ServiceProvider.jar"/>
+  </target>
+  
+  <target name="artifact.government:jar" depends="init.artifacts, compile.module.government" description="Build &#39;Government:jar&#39; artifact">
+    <property name="artifact.temp.output.government:jar" value="${artifacts.temp.dir}/Government_jar"/>
+    <mkdir dir="${artifact.temp.output.government:jar}"/>
+    <jar destfile="${temp.jar.path.Government.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+      <zipfileset dir="${government.output.dir}"/>
+      <manifest>
+        <attribute name="Main-Class" value="be.msec.government.Timestamp"/>
+      </manifest>
+    </jar>
+    <copy file="${temp.jar.path.Government.jar}" tofile="${artifact.temp.output.government:jar}/Government.jar"/>
+  </target>
+  
+  <target name="artifact.middleware:jar" depends="init.artifacts, compile.module.middleware" description="Build &#39;Middleware:jar&#39; artifact">
+    <property name="artifact.temp.output.middleware:jar" value="${artifacts.temp.dir}/Middleware_jar"/>
+    <mkdir dir="${artifact.temp.output.middleware:jar}"/>
+    <jar destfile="${temp.jar.path.Middleware.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+      <zipfileset dir="${middleware.output.dir}"/>
+      <zipfileset src="${basedir}/Middleware/libs/apduio.jar"/>
+      <manifest>
+        <attribute name="Main-Class" value="be.msec.client.Client"/>
+      </manifest>
+    </jar>
+    <copy file="${temp.jar.path.Middleware.jar}" tofile="${artifact.temp.output.middleware:jar}/Middleware.jar"/>
+  </target>
+  
+  <target name="artifact.serviceprovider:jar" depends="init.artifacts, compile.module.serviceprovider" description="Build &#39;ServiceProvider:jar&#39; artifact">
+    <property name="artifact.temp.output.serviceprovider:jar" value="${artifacts.temp.dir}/ServiceProvider_jar"/>
+    <mkdir dir="${artifact.temp.output.serviceprovider:jar}"/>
+    <jar destfile="${temp.jar.path.ServiceProvider.jar}" duplicate="preserve" filesetmanifest="mergewithoutmain">
+      <zipfileset dir="${serviceprovider.output.dir}"/>
+      <manifest>
+        <attribute name="Main-Class" value="be.msec.service.Provider"/>
+      </manifest>
+    </jar>
+    <copy file="${temp.jar.path.ServiceProvider.jar}" tofile="${artifact.temp.output.serviceprovider:jar}/ServiceProvider.jar"/>
+  </target>
+  
+  <target name="build.all.artifacts" depends="artifact.government:jar, artifact.middleware:jar, artifact.serviceprovider:jar" description="Build all artifacts">
+    <mkdir dir="${artifact.output.government:jar}"/>
+    <copy todir="${artifact.output.government:jar}">
+      <fileset dir="${artifact.temp.output.government:jar}"/>
+    </copy>
+    <mkdir dir="${artifact.output.middleware:jar}"/>
+    <copy todir="${artifact.output.middleware:jar}">
+      <fileset dir="${artifact.temp.output.middleware:jar}"/>
+    </copy>
+    <mkdir dir="${artifact.output.serviceprovider:jar}"/>
+    <copy todir="${artifact.output.serviceprovider:jar}">
+      <fileset dir="${artifact.temp.output.serviceprovider:jar}"/>
+    </copy>
+    
+    <!-- Delete temporary files -->
+    <delete dir="${artifacts.temp.dir}"/>
+  </target>
+  
+  <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
+</project>
