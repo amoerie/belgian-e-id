@@ -156,7 +156,7 @@ workspace/.idea/replstate.xml
 com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
-fabric.properties
+fabric.propegit rties
 
 ### Intellij+iml Patch ###
 # Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-249601023
