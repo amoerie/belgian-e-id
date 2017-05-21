@@ -1,0 +1,1 @@
+java -Djavax.net.ssl.keyStore="./ServiceProvider/src/belgianeidsha1.jks" -jar "./ServiceProvider/artifacts/ServiceProvider.jar"

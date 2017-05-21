@@ -1,0 +1,1 @@
+java -Djavax.net.ssl.keyStore="./Government/src/belgianeidsha1.jks" -jar "./Government/artifacts/Government.jar"

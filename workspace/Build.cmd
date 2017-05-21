@@ -1,0 +1,1 @@
+cd ant && cd bin && ant all -f "../../build.xml" && cd .. && cd ..

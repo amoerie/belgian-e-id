@@ -1,0 +1,1 @@
+java -Djavax.net.ssl.trustStore="./Middleware/src/belgianeidsha1.jks" -jar "./Middleware/artifacts/Middleware.jar"
