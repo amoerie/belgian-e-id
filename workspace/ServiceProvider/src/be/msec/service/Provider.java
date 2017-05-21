@@ -25,24 +25,21 @@ import javax.swing.JCheckBox;
 
 public class Provider extends JFrame {
 
-	private JPanel contentPane;
-	private JPanel selectionPane;
-	
-	private JComboBox cbDomain;
-	private JComboBox cbService;
+	private JComboBox<String> cbDomain;
+	private JComboBox<String> cbService;
 	private JButton btnInitButton;
 	
-	public static JCheckBox chckbxNym;
-	public static JCheckBox chckbxName;
-	public static JCheckBox chckbxAddress;
-	public static JCheckBox chckbxCountry;
-	public static JCheckBox chckbxBirthdate;
-	public static JCheckBox chckbxAge;
-	public static JCheckBox chckbxGender;
-	public static JCheckBox chckbxPicture;
+	static JCheckBox chckbxNym;
+	static JCheckBox chckbxName;
+	static JCheckBox chckbxAddress;
+	static JCheckBox chckbxCountry;
+	static JCheckBox chckbxBirthdate;
+	static JCheckBox chckbxAge;
+	static JCheckBox chckbxGender;
+	static JCheckBox chckbxPicture;
 	
-	public static JTextArea output;
-	public static JTextArea logging;
+	static JTextArea output;
+	static JTextArea logging;
 	
 
 	/**
@@ -64,7 +61,7 @@ public class Provider extends JFrame {
 	/**
 	 * Create the frame.
 	 */
-	public Provider() {
+	private Provider() {
 		initComponents();
 		createEvents();
 	}
@@ -102,7 +99,7 @@ public class Provider extends JFrame {
 		
 	}
 
-	protected void initServiceProvider() {
+	private void initServiceProvider() {
 		
 		String domain = (String)cbDomain.getSelectedItem();
 		String service = (String)cbService.getSelectedItem();
@@ -128,7 +125,7 @@ public class Provider extends JFrame {
 
 	private void initComponents() {
 		setBounds(100, 100, 650, 300);
-		contentPane = new JPanel();
+		JPanel contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		contentPane.setLayout(new BorderLayout(0, 0));
 		setContentPane(contentPane);
@@ -138,7 +135,7 @@ public class Provider extends JFrame {
 		
 		
 		//Selection Panel
-		selectionPane = new JPanel();
+		JPanel selectionPane = new JPanel();
 		selectionPane.setLayout(new GridLayout(7, 3, 10, 10));
 		tabbedPane.addTab("Selection", selectionPane);
 	    
@@ -146,7 +143,7 @@ public class Provider extends JFrame {
   		JLabel lblDomain = new JLabel("Domain");
   		lblDomain.setHorizontalAlignment(SwingConstants.RIGHT);
   		selectionPane.add(lblDomain);
-	    cbDomain = new JComboBox();
+	    cbDomain = new JComboBox<String>();
 	    cbDomain.addItem("eGov");
 	    cbDomain.addItem("SocNet");
 	    cbDomain.addItem("SuperMarket");
@@ -157,7 +154,7 @@ public class Provider extends JFrame {
 	    JLabel lblService = new JLabel("Service");
 	    lblService.setHorizontalAlignment(SwingConstants.RIGHT);
   		selectionPane.add(lblService);
-	    cbService = new JComboBox();
+	    cbService = new JComboBox<String>();
 	    cbService.addItem("studentportal");
 	    cbService.addItem("taxonweb");
 	    selectionPane.add(cbService);

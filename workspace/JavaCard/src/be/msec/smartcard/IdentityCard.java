@@ -508,6 +508,7 @@ public class IdentityCard extends Applet {
 		Util.arrayCopy(buffer, (short)5, lastCert, (short)temp.length, (short)bufferLength);
 		System.out.println(byteArrayToHexString(lastCert));
 	}
+	
 	private void treatServiceCertificate(APDU apdu) {
 		//get issuer cn
 		int issuerOffset = arraySubstrIndex(lastCert, CN_BYTES) + CN_BYTES.length;
