@@ -13,10 +13,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Date;
-import java.util.Objects;
 
 public class Client {
 
@@ -219,7 +217,9 @@ public class Client {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
         System.setProperty("javax.net.ssl.trustStoreType", "jks");
         //System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
-        System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
+        if (System.getProperty("javax.net.ssl.trustStore") == null) {
+            System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
+        }
         System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 
         //SSL socket connection
@@ -271,8 +271,9 @@ public class Client {
 
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
         System.setProperty("javax.net.ssl.trustStoreType", "jks");
-        //System.setProperty("javax.net.ssl.trustStore", "src/belgianeid.jks");
-        System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
+        if (System.getProperty("javax.net.ssl.trustStore") == null) {
+            System.setProperty("javax.net.ssl.trustStore", "src/belgianeidsha1.jks");
+        }
         System.setProperty("javax.net.ssl.trustStorePassword", "123456");
 
         //SSL socket connection
@@ -386,7 +387,7 @@ public class Client {
 
         String serviceProviderResponse = activeServiceProviderReader.readLine();
         System.out.println("Server: " + serviceProviderResponse);
-        if("Abort".equals(serviceProviderResponse)) {
+        if ("Abort".equals(serviceProviderResponse)) {
             throw new Exception("Service provider refused to authenticate the card!");
         }
         communication.append("Service Provider response: " + new String(hexStringToByteArray(serviceProviderResponse)) + "\n");

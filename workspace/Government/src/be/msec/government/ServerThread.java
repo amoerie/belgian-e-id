@@ -34,8 +34,6 @@ public class ServerThread extends Thread {
 	//sha256
 	//private static String store_location = "src/belgianeid.jks";
 	//sha1
-	private static String store_location = "src/belgianeidsha1.jks";
-	private static char[] mypass = "123456".toCharArray();
 	private static RSAPrivateCrtKey my_key;
 	private static X509Certificate my_cert;
 	private static byte[] my_cert_bytes;
@@ -90,10 +88,10 @@ public class ServerThread extends Thread {
 		KeyStore store;
 		try {
 			store = KeyStore.getInstance("JKS");
-			FileInputStream stream = new FileInputStream(store_location);
-			store.load(stream, mypass);
+			FileInputStream stream = new FileInputStream(System.getProperty("javax.net.ssl.keyStore"));
+			store.load(stream, System.getProperty("javax.net.ssl.keyStorePassword").toCharArray());
 			stream.close();
-			my_key = (RSAPrivateCrtKey) store.getKey("gov", mypass);
+			my_key = (RSAPrivateCrtKey) store.getKey("gov", System.getProperty("javax.net.ssl.keyStorePassword").toCharArray());
 			my_cert = (X509Certificate) store.getCertificate("gov");
 			my_cert_bytes = my_cert.getEncoded();
 		} catch (KeyStoreException e) {
