@@ -169,7 +169,7 @@ public class Client {
     }
 
     //step 1
-    private void updateTime() throws Exception {
+    private void  updateTime() throws Exception {
         communication.append("Connecting to card - inserted in reader\n");
 
         //step 1 (1) Hello", send currentTime to card

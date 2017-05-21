@@ -68,7 +68,7 @@ public class ProviderThread extends Thread {
     //sha1
     private static RSAPrivateCrtKey service_key;
     private static X509Certificate service_cert;
-    private static X509Certificate gov_cert;
+    private static X509Certificate ca_cert;
     private static byte[] service_cert_bytes;
 
     private SecretKeySpec my_symm_key;
@@ -136,7 +136,7 @@ public class ProviderThread extends Thread {
             service_key = (RSAPrivateCrtKey) store.getKey(service, keyStorePassword);
             service_cert = (X509Certificate) store.getCertificate(service);
             service_cert_bytes = service_cert.getEncoded();
-            gov_cert = (X509Certificate) store.getCertificate("gov");
+            ca_cert = (X509Certificate) store.getCertificate("ca");
         } catch (KeyStoreException e) {
             e.printStackTrace();
         }
@@ -275,7 +275,7 @@ public class ProviderThread extends Thread {
             System.out.println(common_cert.toString());
 
             Signature cert_sig = Signature.getInstance("SHA1withRSA");
-            cert_sig.initVerify(gov_cert.getPublicKey());
+            cert_sig.initVerify(ca_cert.getPublicKey());
             cert_sig.update(common_cert.getTBSCertificate());
             boolean cert_verify = cert_sig.verify(common_cert.getSignature());
 
@@ -283,7 +283,7 @@ public class ProviderThread extends Thread {
             boolean sig_verify = false;
             if (new_date.after(common_cert.getNotBefore())
                     && new_date.before(common_cert.getNotAfter())
-                    && common_cert.getSubjectDN().getName().equals("OID.0.9.2342.19200300.100.4.13=Common, CN=Common")
+                    && common_cert.getSubjectDN().getName().equals("OID.0.9.2342.19200300.100.4.13=common, CN=COMMON, O=VUB, L=Brussels, ST=Brussels, C=BE")
                     && cert_verify) {
                 // verify signature on challenge with pk from common certificate
                 Signature sig = Signature.getInstance("SHA1withRSA");

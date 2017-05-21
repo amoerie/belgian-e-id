@@ -113,7 +113,7 @@ public class Provider extends JFrame {
 		//System.setProperty("javax.net.ssl.keyStore", "src/belgianeid.jks");
 		System.out.println("javax.net.ssl.keyStore = " + System.getProperty("javax.net.ssl.keyStore"));
 		if (System.getProperty("javax.net.ssl.keyStore") == null) {
-			System.setProperty("javax.net.ssl.keyStore", "src/belgianeidsha1.jks");
+			System.setProperty("javax.net.ssl.keyStore", "D:\\SecurityInComputing\\belgian-e-id\\workspace\\ServiceProvider\\src\\belgianeidsha1.jks");
 		}
 		System.setProperty("javax.net.ssl.keyStorePassword", "123456");
 		

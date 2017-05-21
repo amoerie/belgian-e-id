@@ -567,7 +567,7 @@ public class IdentityCard extends Applet {
         System.out.println("last_cert_signature: " + byteArrayToHexString(last_cert_signature));
         System.out.println("gov_pk: " + gov_pk);
 
-        //TODO: to check
+        //TODO: check if the service provider certificate is signed by the root CA?
 //		if (verifySig(last_cert_tbs, last_cert_signature, gov_pk) != false){
 //			System.out.println("Certificate verified");
 //		}else ISOException.throwIt(SW_SIG_NO_MATCH);
