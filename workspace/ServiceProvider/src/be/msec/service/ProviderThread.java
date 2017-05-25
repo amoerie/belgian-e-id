@@ -224,7 +224,7 @@ public class ProviderThread extends Thread {
                 random.nextBytes(server_challenge);
                 challenge_resp_bytes[1 + challenge_long_bytes.length] = (byte) server_challenge.length;
                 System.arraycopy(server_challenge, 0, challenge_resp_bytes, 1 + challenge_long_bytes.length + 1, server_challenge.length);
-
+                System.out.println("Sending challenge to card: " + byteArrayToHexString(server_challenge));
                 cipher = Cipher.getInstance("AES/CBC/NoPadding");
                 cipher.init(Cipher.ENCRYPT_MODE, my_symm_key, new IvParameterSpec(iv));
                 byte[] challenge_resp_encrypted = new byte[LENGTH_AES_128_BYTES];
@@ -277,7 +277,9 @@ public class ProviderThread extends Thread {
             Signature cert_sig = Signature.getInstance("SHA1withRSA");
             cert_sig.initVerify(ca_cert.getPublicKey());
             cert_sig.update(common_cert.getTBSCertificate());
+            System.out.println("Verifying that card has correct common certificate");
             boolean cert_verify = cert_sig.verify(common_cert.getSignature());
+            System.out.println("Card certificate is valid: " + cert_verify);
 
             Date new_date = new Date();
             boolean sig_verify = false;
@@ -286,10 +288,12 @@ public class ProviderThread extends Thread {
                     && common_cert.getSubjectDN().getName().equals("OID.0.9.2342.19200300.100.4.13=common, CN=COMMON, O=VUB, L=Brussels, ST=Brussels, C=BE")
                     && cert_verify) {
                 // verify signature on challenge with pk from common certificate
+                System.out.println("Verifying that card has signed the challenge correctly: " + byteArrayToHexString(server_challenge));
                 Signature sig = Signature.getInstance("SHA1withRSA");
                 sig.initVerify(common_cert.getPublicKey());
                 sig.update(server_challenge);
                 sig_verify = sig.verify(service_challenge_resp);
+                System.out.println("Card has correctly signed challenge:  " + sig_verify);
             }
 
             //send query for card data.

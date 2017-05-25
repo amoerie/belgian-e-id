@@ -697,9 +697,12 @@ public class IdentityCard extends Applet {
             i += LENGTH_AES_128_BYTES - (i % 16);
             last_server_challenge_resp = new byte[i];
             last_server_challenge_resp[0] = (byte) LENGTH_RSA_512_BYTES;
+            
+            System.out.println("Signing challenge from service provider: " + byteArrayToHexString(last_server_challenge));
             sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
             sig.init(common_sk, Signature.MODE_SIGN);
             sig.sign(last_server_challenge, (short) 0, (short) last_server_challenge.length, last_server_challenge_resp, (short) 1);
+            
             //add the common certificate
             System.out.println("cert length " + common_cert_bytes.length);
             last_server_challenge_resp[1 + LENGTH_RSA_512_BYTES] = (byte) (last_server_challenge_resp.length - 1 - LENGTH_RSA_512_BYTES - 1 - common_cert_bytes.length); //we will not send the cert length, but the number of remaining bytes in the array
