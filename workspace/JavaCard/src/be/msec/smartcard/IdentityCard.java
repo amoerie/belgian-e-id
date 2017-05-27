@@ -1,5 +1,15 @@
 package be.msec.smartcard;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
 import javacard.framework.APDU;
 import javacard.framework.Applet;
 import javacard.framework.ISO7816;
@@ -58,6 +68,7 @@ public class IdentityCard extends Applet {
     private String common_key_hex;
     private String common_cert_hex;
     private String gov_cert_hex;
+    private String ca_cert_hex;
 
     private byte[] common_key_bytes;
     private byte[] common_cert_bytes;
@@ -68,6 +79,9 @@ public class IdentityCard extends Applet {
     private byte[] gov_cert_bytes;
     private byte[] gov_modulus_bytes;
     private byte[] gov_exp_pub_bytes;
+    private byte[] ca_cert_bytes;
+    //private byte[] ca_modulus_bytes;
+    //private byte[] ca_exp_pub_bytes;
 
     //different domains
     private final static String DOMAIN_DEFAULT_HEX = "64656661756C74";
@@ -114,6 +128,7 @@ public class IdentityCard extends Applet {
     private RSAPrivateKey common_sk = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
     private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
     private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+    //private RSAPublicKey ca_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 
     private final static int LENGTH_RSA_512_BYTES = KeyBuilder.LENGTH_RSA_512 / 8;
     private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128 / 8;
@@ -190,7 +205,7 @@ public class IdentityCard extends Applet {
         //sha1
         //gov_cert_hex = "3082026D30820217A00302010202010B300D06092A864886F70D01010B05003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303531373036323335395A170D3230303231313036323335395A304F310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310C300A060355040A0C03565542310C300A06035504030C03474F56305C300D06092A864886F70D0101010500034B003048024100C7A1D94ECD0C38D479C419EE1A017B13E05A9CC27BB2AEBAEA6F3B5E4D6D8974E4A73C4F4A7F2C6B52222F72EDB3F49C634F6CFCAD16E11B66B65AE869F45E4B0203010001A381B73081B4301D0603551D0E04160414402A635607C77E36458D6C9D944A2D419FF0B02F301F0603551D2304183016801435245A6A2549527B9DF54AC1288D39C77B00405030090603551D1304023000300B0603551D0F0404030205A0302C0603551D110425302382096C6F63616C686F737487047F000001871000000000000000000000000000000001302C06096086480186F842010D041F161D4F70656E53534C2047656E657261746564204365727469666963617465300D06092A864886F70D01010B0500034100824EFF9C2F07473BBF439BBDD427AAA92D56BD96A9FF7EEEB390F4D6EA82286B49828DB98785B16858B68AF560AAF9DF89B6733616F4FEDB2FBD3554788B9B54";
         //new sha1 certificate
-        gov_cert_hex = "3082026D30820217A003020102020101300D06092A864886F70D01010505003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303531383133303030345A170D3230303231323133303030345A304F310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310C300A060355040A0C03565542310C300A06035504030C03474F56305C300D06092A864886F70D0101010500034B003048024100D68699657BF8EE12399D3A24A477CD094A27DDD51B8C99CEFD15C17D2FBE42676C95FFD6BF9402E3E06C55DBB50B3504CBE26D6AC9D7E9AEA57D206673EFE9470203010001A381B73081B4301D0603551D0E041604142A8DEF92A80464783437CD2FA6AB256393613459301F0603551D230418301680140082A0BEDC088FD044D1FE31A0272DC006C49D6B30090603551D1304023000300B0603551D0F0404030205A0302C0603551D110425302382096C6F63616C686F737487047F000001871000000000000000000000000000000001302C06096086480186F842010D041F161D4F70656E53534C2047656E657261746564204365727469666963617465300D06092A864886F70D01010505000341005C61644A6FEBCCC3AB5260FA213DB43F8ED8A517375EBBF177B6DC9957213F87DF3FB3831211E77BFC2355C2DCC3358B9D326D426EB597DB22B57A4555FAF2C1";
+        gov_cert_hex = "3082026D30820217A003020102020101300D06092A864886F70D01010505003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303531383133303030345A170D3230303231323133303030345A304F310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310C300A060355040A0C03565542310C300A06035504030C03474F56305C300D06092A864886F70D0101010500034B003048024100D68699657BF8EE12399D3A24A477CD094A27DDD51B8C99CEFD15C17D2FBE42676C95FFD6BF9402E3E06C55DBB50B3504CBE26D6AC9D7E9AEA57D206673EFE9470203010001A381B73081B4301D0603551D0E041604142A8DEF92A80464783437CD2FA6AB256393613459301F0603551D230418301680140082A0BEDC088FD044D1FE31A0272DC006C49D6B30090603551D1304023000300B0603551D0F0404030205A0302C0603551D110425302382096C6F63616C686F737487047F000001871000000000000000000000000000000001302C06096086480186F842010D041F161D4F70656E53534C2047656E657261746564204365727469666963617465300D06092A864886F70D01010505000341005C61644A6FEBCCC3AB5260FA213DB43F8ED8A517375EBBF177B6DC9957213F87DF3FB3831211E77BFC2355C2DCC3358B9D326D426EB597DB22B57A4555FAF2C1";        
         gov_cert_bytes = hexStringToByteArray(gov_cert_hex);
 
         int temp_int = arraySubstrIndex(gov_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
@@ -198,6 +213,17 @@ public class IdentityCard extends Applet {
         Util.arrayCopy(gov_cert_bytes, (short) temp_int, gov_modulus_bytes, (short) 0, (short) LENGTH_RSA_512_BYTES);
         gov_exp_pub_bytes = hexStringToByteArray("010001");
 
+        // ca certificates
+        
+        //ca
+        ca_cert_hex = "30820243308201EDA00302010202090080F938B672EFAF2E300D06092A864886F70D01010505003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303531383132353635385A170D3137303631373132353635385A3075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265305C300D06092A864886F70D0101010500034B003048024100F737CE4E93501A036FFCA0D14AAC932AECE3B8AF17A48FF7BF3FD93B98DA70B2DC950625CE54EDB7DB31C58D7B9A3100BCD13086DFAADE1A122B2FBD4DD5499D0203010001A360305E301D0603551D0E041604140082A0BEDC088FD044D1FE31A0272DC006C49D6B301F0603551D230418301680140082A0BEDC088FD044D1FE31A0272DC006C49D6B300F0603551D130101FF040530030101FF300B0603551D0F040403020106300D06092A864886F70D0101050500034100009860DAF3C2C8E78390077C9EFAB76E3B23C1CC79D9FECC8BEC03FAAC5C7F351EF37A6F554DFAAE918882485D9E0C47AAD2852DCF528163A69A6B43E1AF7818";
+        ca_cert_bytes = hexStringToByteArray(ca_cert_hex);
+        
+//        temp_int = arraySubstrIndex(ca_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
+//        ca_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
+//        Util.arrayCopy(ca_cert_bytes, (short) temp_int, ca_modulus_bytes, (short) 0, (short) LENGTH_RSA_512_BYTES);
+//        ca_exp_pub_bytes = hexStringToByteArray("010001");
+        
         //common certificates
         //common private key
         common_key_hex = "30820156020100300D06092A864886F70D0101010500048201403082013C020100024100E62E8EF30AB20EA76F65072011C69B0C1535C078A57866CF22634AB0EAA2F4D7D7A1A662E4D029686C12C50F8A4BE413F4791BC9F1268A183DE6237FFD020AD102030100010240666BA70DBBDF98A7A5E855304ED8895AEA011DE050F86EFE91B58EA183F5F86D4E1E5EA235CED42E02D5BAF1699E4BA63B1A2391866BDCACA4157D05F00D4FF1022100F87924007013BFCD247CF1276296B78DE173C2D05711F859A790698BFEB944E5022100ED2792789C24D6480559E34282C83440D673CE50E85962C8318476CA89F65B7D022100B3C340CEA847417E7325897ACB12EB5D547CE1B6C527951B97E51CD751C44C19022100C9AF48C2A7D0302809DCFB07DA5F5708F9187D929337496A05AAA8B7F10281A5022100AA1B57991C6AA1FE63FB92A2BAD7F44B9637F4A0AF765C65AEA326C408E2A83A";
@@ -218,6 +244,9 @@ public class IdentityCard extends Applet {
         gov_pk.setExponent(gov_exp_pub_bytes, (short) 0, (short) gov_exp_pub_bytes.length);
         gov_pk.setModulus(gov_modulus_bytes, (short) 0, (short) gov_modulus_bytes.length);
 
+        //ca_pk.setExponent(ca_exp_pub_bytes, (short) 0, (short) ca_exp_pub_bytes.length);
+        //ca_pk.setModulus(ca_modulus_bytes, (short) 0, (short) ca_modulus_bytes.length);
+        
         common_sk.setExponent(common_exp_priv_bytes, (short) 0, (short) common_exp_priv_bytes.length);
         common_sk.setModulus(common_modulus_bytes, (short) 0, (short) common_modulus_bytes.length);
         common_pk.setExponent(common_exp_pub_bytes, (short) 0, (short) common_exp_pub_bytes.length);
@@ -460,7 +489,7 @@ public class IdentityCard extends Applet {
 
         // (10) Verify signature with PK of Government
         System.out.println("Verify signature with PK of Government");
-        //why not ALG_RSA_SHAT_256_PKCS1
+        //why not ALG_RSA_SHA_256_PKCS1
         //https://docs.oracle.com/javacard/3.0.5/api/javacard/security/Signature.html
         //https://www.win.tue.nl/pinpasjc/docs/apis/jc222/javacard/security/Signature.html
         //Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_256_PKCS1, false); --> not yet in 2.2.2
@@ -562,15 +591,23 @@ public class IdentityCard extends Applet {
 
     private void authenticateService(APDU apdu) {
         //Step 2 (2) verify certificate
-        System.out.println("authenticateService");
-        System.out.println("last_cert_tbs: " + byteArrayToHexString(last_cert_tbs));
-        System.out.println("last_cert_signature: " + byteArrayToHexString(last_cert_signature));
-        System.out.println("gov_pk: " + gov_pk);
 
-        //TODO: check if the service provider certificate is signed by the root CA?
-//		if (verifySig(last_cert_tbs, last_cert_signature, gov_pk) != false){
-//			System.out.println("Certificate verified");
-//		}else ISOException.throwIt(SW_SIG_NO_MATCH);
+        //check if the service provider certificate is signed by the root CA?
+		try {
+			if (verifyCert()){
+				System.out.println("Certificate verified");
+			}else ISOException.throwIt(SW_SIG_NO_MATCH);
+		} catch (InvalidKeyException e) {
+			ISOException.throwIt(SW_SIG_NO_MATCH);
+		} catch (CertificateException e) {
+			ISOException.throwIt(SW_SIG_NO_MATCH);
+		} catch (NoSuchAlgorithmException e) {
+			ISOException.throwIt(SW_SIG_NO_MATCH);
+		} catch (NoSuchProviderException e) {
+			ISOException.throwIt(SW_SIG_NO_MATCH);
+		} catch (SignatureException e) {
+			ISOException.throwIt(SW_SIG_NO_MATCH);
+		}
 
         //Step 2 (3) verify if certificate is valid
         if (verifyValid(last_cert_valid_after, last_cert_valid_before, lastValidationTimeString)) {
@@ -627,13 +664,30 @@ public class IdentityCard extends Applet {
 
     }
 
-    private boolean verifySig(byte[] message, byte[] signature, RSAPublicKey pk) {
-        System.out.println("verifying signature");
-        System.out.println(byteArrayToHexString(message));
-        System.out.println(byteArrayToHexString(signature));
-        Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-        sig.init(pk, Signature.MODE_VERIFY);
-        return sig.verify(message, (short) 0, (short) message.length, signature, (short) 0, (short) signature.length);
+    private boolean verifyCert() throws CertificateException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
+    	System.out.println("verifying certificate");
+        
+        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+        InputStream in = new ByteArrayInputStream(lastCert);
+        X509Certificate cert_SP = (X509Certificate)certFactory.generateCertificate(in);
+        
+        CertificateFactory certFactoryCA = CertificateFactory.getInstance("X.509");
+        InputStream inCA = new ByteArrayInputStream(ca_cert_bytes);
+        X509Certificate cert_CA = (X509Certificate)certFactoryCA.generateCertificate(inCA);
+        
+        try
+        {   //Not your CA's. Check if it has been signed by your CA
+        	java.security.PublicKey pubKeyCA = cert_CA.getPublicKey();
+        	
+        	//cert_CA.verify(pubKeyCA);
+        	cert_SP.verify(pubKeyCA);
+        	
+        	return true;
+        }
+        catch(Exception e){   
+            //throw new CertificateException("Certificate not trusted",e);
+        	return false;
+        }
     }
 
     private boolean verifyValid(byte[] cert_after, byte[] cert_before, byte[] time_string) {
