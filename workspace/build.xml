@@ -272,70 +272,22 @@
   
   <path id="middleware.module.production.classpath">
     <path refid="${module.jdk.classpath.middleware}"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
     <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
   </path>
   
   <path id="middleware.runtime.production.module.classpath">
     <pathelement location="${middleware.output.dir}"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
     <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
   </path>
   
   <path id="middleware.module.classpath">
     <pathelement location="${middleware.output.dir}"/>
     <path refid="${module.jdk.classpath.middleware}"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
     <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
   </path>
   
   <path id="middleware.runtime.module.classpath">
     <pathelement location="${middleware.output.dir}"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.osgi_3.11.3.v20170209-1843.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.commands_3.8.1.v20161221-1651.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.common_3.8.0.v20160509-1230.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.equinox.registry_3.6.100.v20160223-2218.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.core.runtime_3.12.0.v20160606-1342.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.text_3.6.0.v20160503-1849.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.swt.win32.win32.x86_64_3.105.3.v20170228-0512.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface_3.12.2.v20170113-2113.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.jface.text_3.11.2.v20170220-1911.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.workbench_3.108.3.v20170216-1539.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/com.ibm.icu_56.1.0.v201601250100.jar"/>
-    <pathelement location="${basedir}/../../../eclipse neon ee/plugins/org.eclipse.ui.forms_3.7.1.v20161220-1635.jar"/>
     <pathelement location="${basedir}/Middleware/libs/apduio.jar"/>
   </path>
   
