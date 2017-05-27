@@ -257,7 +257,7 @@ public class ProviderThread extends Thread {
             Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE, my_symm_key, new IvParameterSpec(iv));
             cipher.doFinal(msg_bytes, 0, msg_bytes.length, msg_decrypted, 0);
-            System.out.println(byteArrayToHexString(msg_decrypted));
+            System.out.println("Step 3 - (8) received message: " + byteArrayToHexString(msg_decrypted));
 
             //extract challenge response and certificate
             byte[] service_challenge_resp = new byte[msg_decrypted[0]];
@@ -265,7 +265,7 @@ public class ProviderThread extends Thread {
             int cert_length = (msg_decrypted.length - 1 - service_challenge_resp.length - 1 - (int) msg_decrypted[1 + service_challenge_resp.length]);
             byte[] common_cert_temp = new byte[cert_length];
             System.arraycopy(msg_decrypted, service_challenge_resp.length + 2, common_cert_temp, 0, common_cert_temp.length);
-            System.out.println(byteArrayToHexString(common_cert_temp));
+            System.out.println("common certificate: " + byteArrayToHexString(common_cert_temp));
             System.out.println("cert length is " + common_cert_temp.length);
 
             //verify certificate signature, date and subject
@@ -293,6 +293,7 @@ public class ProviderThread extends Thread {
                 sig.initVerify(common_cert.getPublicKey());
                 sig.update(server_challenge);
                 sig_verify = sig.verify(service_challenge_resp);
+
                 System.out.println("Card has correctly signed challenge:  " + sig_verify);
             }
 
@@ -316,7 +317,7 @@ public class ProviderThread extends Thread {
                 listAskedFields.add("picture");
             String[] arrayOfAskedFields = listAskedFields.toArray(new String[listAskedFields.size()]);
 
-            if (sig_verify) {
+            if (sig_verify != false) {
                 result = new StringBuilder();
                 for (String askedField : arrayOfAskedFields) {
                     System.out.println(askedField);
