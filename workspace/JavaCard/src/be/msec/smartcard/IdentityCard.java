@@ -74,8 +74,8 @@ public class IdentityCard extends Applet {
     private byte[] common_cert_bytes;
     private byte[] common_modulus_bytes;
     private byte[] common_exp_priv_bytes;
-    private byte[] common_exp_pub_bytes;
-    private byte[] common_sig_bytes;
+    //private byte[] common_exp_pub_bytes;
+    //private byte[] common_sig_bytes;
     private byte[] gov_cert_bytes;
     private byte[] gov_modulus_bytes;
     private byte[] gov_exp_pub_bytes;
@@ -126,7 +126,7 @@ public class IdentityCard extends Applet {
     static byte[] queryItem = new byte[0];
 
     private RSAPrivateKey common_sk = (RSAPrivateKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE, KeyBuilder.LENGTH_RSA_512, false);
-    private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
+    //private RSAPublicKey common_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
     private RSAPublicKey gov_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
     //private RSAPublicKey ca_pk = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_512, false);
 
@@ -134,7 +134,7 @@ public class IdentityCard extends Applet {
     private final static int LENGTH_AES_128_BYTES = KeyBuilder.LENGTH_AES_128 / 8;
     private Cipher cipher;
     private RandomData srng;
-    private Signature sig;
+    //private Signature sig;
     private MessageDigest md;
 
     byte[] queryResult;
@@ -238,7 +238,7 @@ public class IdentityCard extends Applet {
         temp_int = arraySubstrIndex(common_key_bytes, EXPONENT_BYTES) + EXPONENT_BYTES.length;
         common_exp_priv_bytes = new byte[LENGTH_RSA_512_BYTES];
         Util.arrayCopy(common_key_bytes, (short) temp_int, common_exp_priv_bytes, (short) 0, (short) LENGTH_RSA_512_BYTES);
-        common_exp_pub_bytes = hexStringToByteArray("010001");
+        //common_exp_pub_bytes = hexStringToByteArray("010001");
 
         // make keys
         gov_pk.setExponent(gov_exp_pub_bytes, (short) 0, (short) gov_exp_pub_bytes.length);
@@ -249,8 +249,8 @@ public class IdentityCard extends Applet {
         
         common_sk.setExponent(common_exp_priv_bytes, (short) 0, (short) common_exp_priv_bytes.length);
         common_sk.setModulus(common_modulus_bytes, (short) 0, (short) common_modulus_bytes.length);
-        common_pk.setExponent(common_exp_pub_bytes, (short) 0, (short) common_exp_pub_bytes.length);
-        common_pk.setModulus(common_modulus_bytes, (short) 0, (short) common_modulus_bytes.length);
+        //common_pk.setExponent(common_exp_pub_bytes, (short) 0, (short) common_exp_pub_bytes.length);
+        //common_pk.setModulus(common_modulus_bytes, (short) 0, (short) common_modulus_bytes.length);
 		
 		/*
 		 * This method registers the applet with the JCRE on the card.
@@ -754,11 +754,13 @@ public class IdentityCard extends Applet {
             last_server_challenge_resp[0] = (byte) LENGTH_RSA_512_BYTES;
             
             System.out.println("Signing challenge from service provider: " + byteArrayToHexString(last_server_challenge));
-            sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+            
+            //https://msec.be/wiscy/seminarie/ho_sc.pdf
+            Signature sig = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
             sig.init(common_sk, Signature.MODE_SIGN);
             sig.sign(last_server_challenge, (short) 0, (short) last_server_challenge.length, last_server_challenge_resp, (short) 1);
             
-            //add the common certificate
+            //add the common certificate - step 3 (7)
             System.out.println("cert length " + common_cert_bytes.length);
             last_server_challenge_resp[1 + LENGTH_RSA_512_BYTES] = (byte) (last_server_challenge_resp.length - 1 - LENGTH_RSA_512_BYTES - 1 - common_cert_bytes.length); //we will not send the cert length, but the number of remaining bytes in the array
             Util.arrayCopy(common_cert_bytes, (short) 0, last_server_challenge_resp, (short) (1 + LENGTH_RSA_512_BYTES + 1), (short) common_cert_bytes.length);

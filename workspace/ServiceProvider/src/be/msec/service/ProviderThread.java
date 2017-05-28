@@ -288,11 +288,12 @@ public class ProviderThread extends Thread {
                     && common_cert.getSubjectDN().getName().equals("OID.0.9.2342.19200300.100.4.13=common, CN=COMMON, O=VUB, L=Brussels, ST=Brussels, C=BE")
                     && cert_verify) {
                 // verify signature on challenge with pk from common certificate
+            	//https://msec.be/wiscy/seminarie/ho_sc.pdf
                 System.out.println("Verifying that card has signed the challenge correctly: " + byteArrayToHexString(server_challenge));
                 Signature sig = Signature.getInstance("SHA1withRSA");
                 sig.initVerify(common_cert.getPublicKey());
                 sig.update(server_challenge);
-                sig_verify = sig.verify(service_challenge_resp);
+				sig_verify = sig.verify(service_challenge_resp);
 
                 System.out.println("Card has correctly signed challenge:  " + sig_verify);
             }
@@ -317,7 +318,7 @@ public class ProviderThread extends Thread {
                 listAskedFields.add("picture");
             String[] arrayOfAskedFields = listAskedFields.toArray(new String[listAskedFields.size()]);
 
-            if (sig_verify != false) {
+            if (sig_verify) {
                 result = new StringBuilder();
                 for (String askedField : arrayOfAskedFields) {
                     System.out.println(askedField);
