@@ -69,6 +69,7 @@ public class ProviderThread extends Thread {
     private static RSAPrivateCrtKey service_key;
     private static X509Certificate service_cert;
     private static X509Certificate ca_cert;
+    //private static X509Certificate common_cert_test;
     private static byte[] service_cert_bytes;
 
     private SecretKeySpec my_symm_key;
@@ -137,6 +138,7 @@ public class ProviderThread extends Thread {
             service_cert = (X509Certificate) store.getCertificate(service);
             service_cert_bytes = service_cert.getEncoded();
             ca_cert = (X509Certificate) store.getCertificate("ca");
+            //common_cert_test = (X509Certificate) store.getCertificate("common");
         } catch (KeyStoreException e) {
             e.printStackTrace();
         }
@@ -264,6 +266,7 @@ public class ProviderThread extends Thread {
             System.arraycopy(msg_decrypted, 1, service_challenge_resp, 0, service_challenge_resp.length);
             int cert_length = (msg_decrypted.length - 1 - service_challenge_resp.length - 1 - (int) msg_decrypted[1 + service_challenge_resp.length]);
             byte[] common_cert_temp = new byte[cert_length];
+            //input, inputPos, output, outputPos, length!!
             System.arraycopy(msg_decrypted, service_challenge_resp.length + 2, common_cert_temp, 0, common_cert_temp.length);
             System.out.println("common certificate: " + byteArrayToHexString(common_cert_temp));
             System.out.println("cert length is " + common_cert_temp.length);
@@ -292,6 +295,7 @@ public class ProviderThread extends Thread {
                 System.out.println("Verifying that card has signed the challenge correctly: " + byteArrayToHexString(server_challenge));
                 Signature sig = Signature.getInstance("SHA1withRSA");
                 sig.initVerify(common_cert.getPublicKey());
+                //sig.initVerify(common_cert_test.getPublicKey());
                 sig.update(server_challenge);
 				sig_verify = sig.verify(service_challenge_resp);
 
