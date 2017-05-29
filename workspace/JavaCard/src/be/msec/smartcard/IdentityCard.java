@@ -3,12 +3,18 @@ package be.msec.smartcard;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Base64;
+
+import javax.xml.bind.DatatypeConverter;
 
 import javacard.framework.APDU;
 import javacard.framework.Applet;
@@ -20,6 +26,8 @@ import javacard.security.*;
 import javacardx.crypto.*;
 
 public class IdentityCard extends Applet {
+	
+	//private RSAPrivateKey privateKeyCommon;
 	
 	private short offset_0 = 0;
 	private short offset_1 = 1;
@@ -237,7 +245,52 @@ public class IdentityCard extends Applet {
         common_cert_hex = "3082028830820232A00302010202010A300D06092A864886F70D01010505003075310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310B3009060355040A0C024341310C300A060355040B0C03565542310B300906035504030C0243413118301606092A864886F70D01090116096361407675622E6265301E170D3137303531383133313435315A170D3230303231323133313435315A306A310B30090603550406130242453111300F06035504080C084272757373656C733111300F06035504070C084272757373656C73310C300A060355040A0C03565542310F300D06035504030C06434F4D4D4F4E31163014060A0992268993F22C64040D0C06636F6D6D6F6E305C300D06092A864886F70D0101010500034B003048024100C3112DBCA42C1E2936CDDDDCE69D69CA14E0D1DF8FDD3477F972AEF1C9F2F4EFD4B6E4F074FF88E797AF134ED55682C414D8BC941E2CEF9A876A64361FE4865D0203010001A381B73081B4301D0603551D0E041604147E14B56E263AD7B7A12823E69AE961A3FD4913F0301F0603551D230418301680140082A0BEDC088FD044D1FE31A0272DC006C49D6B30090603551D1304023000300B0603551D0F0404030205A0302C0603551D110425302382096C6F63616C686F737487047F000001871000000000000000000000000000000001302C06096086480186F842010D041F161D4F70656E53534C2047656E657261746564204365727469666963617465300D06092A864886F70D0101050500034100A28D3F7B004D69453B6E05F675D6D47BC932502B9F621FB04CAC322910D3EC6669E154764894559DACBC3BCE38B0139CF1C583D22AF245741AA854EF39D226E1";
         common_key_bytes = hexStringToByteArray(common_key_hex);
         common_cert_bytes = hexStringToByteArray(common_cert_hex);
-
+        
+        
+//http://www.javased.com/?api=java.security.PrivateKey        
+//        KeyFactory keyFactory;
+//		try {
+//			keyFactory = KeyFactory.getInstance("RSA");
+//			java.security.PrivateKey priv=keyFactory.generatePrivate(new PKCS8EncodedKeySpec(common_key_bytes));
+//			int i = 0;
+//		} catch (NoSuchAlgorithmException e) {
+//			// TODO Auto-generated catch block
+//			//e.printStackTrace();
+//		} catch (InvalidKeySpecException e) {
+//			// TODO Auto-generated catch block
+//			//e.printStackTrace();
+//		}
+        
+        
+//        String privateKeyPEM = "MIIBpjBABgkqhkiG9w0BBQ0wMzAbBgkqhkiG9w0BBQwwDgQInZQEIcDYuCUCAggAMBQGCCqGSIb3DQMHBAiz3WrI5kCrcASCAWDb20JyhqxzgKZcY7eepzIvrgKRYaAbGBwwdb8qlNvRA6RypjMJEbK1mnb7HpXk1ecujkOTGBIhzTWNvuZ8aczitdWSt4G0uG2tzWuhkLGcwSaBgY640Dkgt5WgaUgTiaJQe0g2SJFgSd9FXxmDaU9OzXt+XVZAcM4r8m5WRcEctiHvGVV9HnhcPZGMdJyH/Iffb4ho1DScGSX6n5pt+Q8Iq7udhfRBsI7Jd44LTPrkdu2KCJsOzHAas2sUG7n1O5W77ewp4EjfMtf2aSLIbIP5uxWyCDsBud/oM+X45x74kKMCwS6EDi3ZlZDHNfS5y/Q14OHdr47jjz+7fe3zDmqOVmRpFGbuWYAjy5Z28cZM9t18abRN294ObTUn212rEhbcQIcmNzCNFNF3XdJPaBBq4s9JkfhBG9mjyx4OvieozODOW3fypW6bIhbjlxQ7Dw0z9k/fBFc9UyiLb2qYvWom";
+//        //byte[] encoded = Base64.decodeBase64(privateKeyPEM);
+//        byte [] encoded = Base64.getDecoder().decode(privateKeyPEM); 
+//        
+//        try {
+//        	KeyFactory kf = KeyFactory.getInstance("RSA");
+//        	RSAPrivateKey privKey = (RSAPrivateKey) kf.generatePrivate(new PKCS8EncodedKeySpec(encoded));
+//		} catch (InvalidKeySpecException e1) {
+//			// TODO Auto-generated catch block
+//			//e1.printStackTrace();
+//		} catch (NoSuchAlgorithmException e) {
+//			// TODO Auto-generated catch block
+//			//e.printStackTrace();
+//		}
+//        
+//        byte[] keyData = DatatypeConverter.parseHexBinary(common_key_hex);
+//        KeyFactory factory;
+//		try {
+//			factory = KeyFactory.getInstance("RSA");
+//			privateKeyCommon = (RSAPrivateKey) factory.generatePrivate(new PKCS8EncodedKeySpec(keyData));
+//			int i = 0;
+//		} catch (NoSuchAlgorithmException e) {
+//			// TODO Auto-generated catch block
+//			//e.printStackTrace();
+//		} catch (InvalidKeySpecException e) {
+//			// TODO Auto-generated catch block
+//			//e.printStackTrace();
+//		}
+//        
         temp_int = arraySubstrIndex(common_cert_bytes, MODULUS_BYTES) + MODULUS_BYTES.length;
         common_modulus_bytes = new byte[LENGTH_RSA_512_BYTES];
         Util.arrayCopy(common_cert_bytes, (short) temp_int, common_modulus_bytes, offset_0, (short) LENGTH_RSA_512_BYTES);

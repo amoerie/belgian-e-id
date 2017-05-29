@@ -24,6 +24,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -284,6 +285,11 @@ public class ProviderThread extends Thread {
             boolean cert_verify = cert_sig.verify(common_cert.getSignature());
             System.out.println("Card certificate is valid: " + cert_verify);
 
+            
+            RSAPublicKey pub = (RSAPublicKey) common_cert.getPublicKey();
+            System.out.println(pub.getModulus().toString(16));
+            System.out.println(pub.getPublicExponent().toString(16));
+            
             Date new_date = new Date();
             boolean sig_verify = false;
             if (new_date.after(common_cert.getNotBefore())
