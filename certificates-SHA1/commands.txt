@@ -17,6 +17,7 @@ openssl req -config openssl-delhaize.cnf -newkey rsa:512 -sha1 -out delhaizecert
 openssl req -config openssl-kinepolis.cnf -newkey rsa:512 -sha1 -out kinepoliscert.csr -outform PEM
 openssl req -config openssl-planckendael.cnf -newkey rsa:512 -sha1 -out planckendaelcert.csr -outform PEM
 openssl req -config openssl-common.cnf -newkey rsa:512 -sha1 -out commoncert.csr -outform PEM
+openssl req -config openssl-com.cnf -newkey rsa:512 -sha1 -nodes -out comcert.csr -outform PEM
 
 dump: openssl req -text -noout -verify -in govcert.csr
 
@@ -31,6 +32,7 @@ openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out kinepoliscert.pem -infiles kinepoliscert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out planckendaelcert.pem -infiles planckendaelcert.csr
 openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out commoncert.pem -infiles commoncert.csr
+openssl ca -config openssl-ca.cnf -policy signing_policy -extensions signing_req -out comcert.pem -infiles comcert.csr
 
 PEMs converteren naar p12:
 openssl pkcs12 -export -in govcert.pem -inkey govkey.pem -chain -CAfile cacert.pem -name "gov" -out gov.p12
@@ -64,3 +66,4 @@ keytool -importkeystore -deststorepass 123456 -destkeystore belgianeidsha1.jks -
 
 unencrypted version of the private key:
 openssl pkcs8 -in commonkey.pem -out commonkey2.pem
+openssl rsa -in commonkey.pem -out commonkey3.pem

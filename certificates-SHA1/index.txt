@@ -8,3 +8,4 @@ V	200212131416Z		07	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=DELHAIZE/domai
 V	200212131429Z		08	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=KINEPOLIS/domain=default
 V	200212131441Z		09	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=PLANCKENDAEL/domain=default
 V	200212131451Z		0A	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=COMMON/domain=common
+V	200224090647Z		0B	unknown	/C=BE/ST=Brussels/L=Brussels/O=VUB/CN=COM/domain=com
