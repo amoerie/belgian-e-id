@@ -59,3 +59,8 @@ keytool -importkeystore -deststorepass 123456 -destkeystore belgianeidsha1.jks -
 keytool -importkeystore -deststorepass 123456 -destkeystore belgianeidsha1.jks -srckeystore kinepolis.p12 -srcstoretype PKCS12
 keytool -importkeystore -deststorepass 123456 -destkeystore belgianeidsha1.jks -srckeystore planckendael.p12 -srcstoretype PKCS12
 keytool -importkeystore -deststorepass 123456 -destkeystore belgianeidsha1.jks -srckeystore common.p12 -srcstoretype PKCS12
+
+
+
+unencrypted version of the private key:
+openssl pkcs8 -in commonkey.pem -out commonkey2.pem
